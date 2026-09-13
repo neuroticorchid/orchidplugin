@@ -64,7 +64,7 @@ Optional (feature toggles automatically at runtime):
 
 ## Installation
 
-1. Grab the channel jar you want (`OrchidPlugins-<ver>-stable.jar` for production, `-neuro.jar` for testing) from `output/` or [Releases](../../releases).
+1. Grab the channel jar you want (`OrchidPlugins-<ver>-stable.jar` for production, `-neuro.jar` for testing) from `output/` or [Releases](releases).
 2. Drop it into your server's `plugins/` folder.
 3. Restart (or reload) the server.
 
