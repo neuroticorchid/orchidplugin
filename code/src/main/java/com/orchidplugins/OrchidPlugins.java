@@ -115,7 +115,7 @@ public final class OrchidPlugins extends JavaPlugin {
         getCommand("unban").setExecutor(new UnbanCommand(moderationManager, configManager, webhookManager));
         getCommand("suspendstaff").setExecutor(new SuspendStaffCommand(this));
         getCommand("unsuspendstaff").setExecutor(new SuspendStaffCommand(this));
-        OrchidPluginsCommand orchid = new OrchidPluginsCommand(this, database, webhookManager);
+        OrchidPluginsCommand orchid = new OrchidPluginsCommand(this, configManager, database, webhookManager);
         getCommand("orchidplugins").setExecutor(orchid);
         getCommand("orchidplugins").setTabCompleter(orchid);
         AdminAbuseCommand adminAbuse = new AdminAbuseCommand(attributeManager, configManager, this, database, webhookManager);

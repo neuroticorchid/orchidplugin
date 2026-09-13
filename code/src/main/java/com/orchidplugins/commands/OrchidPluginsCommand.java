@@ -1,6 +1,7 @@
 package com.orchidplugins.commands;
 
 import com.orchidplugins.db.SqliteDatabase;
+import com.orchidplugins.managers.ConfigManager;
 import com.orchidplugins.managers.WebhookManager;
 import com.orchidplugins.util.Msg;
 import org.bukkit.command.Command;
@@ -18,14 +19,16 @@ import java.util.Locale;
 public final class OrchidPluginsCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBCOMMANDS = Arrays.asList(
-            "help", "version", "abuselog", "webhook-test");
+            "help", "version", "abuselog", "webhook-test", "reload");
 
     private final Plugin plugin;
+    private final ConfigManager configManager;
     private final SqliteDatabase database;
     private final WebhookManager webhook;
 
-    public OrchidPluginsCommand(Plugin plugin, SqliteDatabase database, WebhookManager webhook) {
+    public OrchidPluginsCommand(Plugin plugin, ConfigManager configManager, SqliteDatabase database, WebhookManager webhook) {
         this.plugin = plugin;
+        this.configManager = configManager;
         this.database = database;
         this.webhook = webhook;
     }
@@ -50,6 +53,15 @@ public final class OrchidPluginsCommand implements CommandExecutor, TabCompleter
                     return true;
                 }
                 webhook.sendTest(sender);
+                return true;
+            case "reload":
+                if (!sender.hasPermission("orchid.reload")) {
+                    Msg.send(sender, "<red>You don't have permission to use this command.");
+                    return true;
+                }
+                configManager.reload();
+                webhook.reload(configManager.getRaw());
+                Msg.send(sender, "<green>OrchidPlugins config reloaded.");
                 return true;
             case "help":
             default:
@@ -129,6 +141,7 @@ public final class OrchidPluginsCommand implements CommandExecutor, TabCompleter
         Msg.send(sender, "<green>- Plugin Info -----");
         Msg.send(sender, "<yellow>/orchidplugins abuselog [player] [limit] <gray>- browse the /aa audit log");
         Msg.send(sender, "<yellow>/orchidplugins webhook-test <gray>- send a test Discord embed");
+        Msg.send(sender, "<yellow>/orchidplugins reload <gray>- reload config.yml without restart");
         Msg.send(sender, "<yellow>/orchidplugins version <gray>- plugin info");
         Msg.send(sender, "<green>----------------");
     }

@@ -86,9 +86,9 @@ commands:
     permission: orchid.adminabuse
     usage: /adminabuse <bigcharacter|reach|speed|jump|health|reset> [player] [value] [-b|-s]
   orchidplugins:
-    description: Show OrchidPlugins help, version, admin abuse log, and webhook test.
+    description: Show OrchidPlugins help, version, admin abuse log, webhook test, and reload.
     aliases: [orchidp, orchid]
-    usage: /orchidplugins help|version|abuselog [player] [limit]|webhook-test
+    usage: /orchidplugins help|version|abuselog [player] [limit]|webhook-test|reload
   checkbounty:
     description: Check your current bounty or a player's bounty.
     usage: /checkbounty [player]
@@ -114,6 +114,7 @@ permissions:
       orchid.adminabuse: true
       orchid.adminabuse.log: true
       orchid.discord.test: true
+      orchid.reload: true
   orchid.roll:
     description: Use /rolldice.
     default: true
@@ -164,4 +165,7 @@ permissions:
     default: op
   orchid.discord.test:
     description: Send a test Discord webhook (/orchidplugins webhook-test).
+    default: op
+  orchid.reload:
+    description: Reload the plugin config (/orchidplugins reload).
     default: op
