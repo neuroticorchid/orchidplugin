@@ -1,0 +1,79 @@
+# =======================================================
+#   COMMAND-BASED RANDOM PLAYER ROLLER (NO ADDONS)
+# =======================================================
+
+command /rolldice:
+    aliases: /roll
+    trigger:
+        # Prevent running multiple rolls simultaneously
+        if {dice::rolling} is set:
+            send "&cPlease wait for the current roll to finish!" to sender
+            stop
+            
+        set {dice::rolling} to true
+        
+        # ---------------------------------------------------
+        # STEP 1: PLAYER SELECTION CHECK
+        # ---------------------------------------------------
+        set {_candidates::*} to all players
+        
+        # Ensure there are players online to pick from
+        if size of {_candidates::*} is 0:
+            send "[Dice] No online players available to select!" to sender
+            delete {dice::rolling}
+            stop
+
+        # ---------------------------------------------------
+        # STEP 2: ANIMATION SEQUENCE
+        # ---------------------------------------------------
+        if sender is console:
+            send "[Dice] Rolling animation started..." to console
+
+        # Audio cue for in-game players
+        play sound "block.note_block.chime" at volume 1 to all players
+
+        # Counter for console output spacing
+        set {_step} to 0
+
+        loop 16 times:
+            add 1 to {_step}
+            set {_tempPlayer} to random element out of {_candidates::*}
+            
+            # Send title animation to all online players
+            send title "&6&l🎲 ROLLING..." with subtitle "&b&l%{_tempPlayer}%" to all players for 1 second with fade in 0 seconds and fade out 0 seconds
+            
+            # Play tick sound to online players
+            play sound "block.note_block.hat" at volume 1 and pitch 1.5 to all players
+            
+            # Print console status every 4 iterations without using 'mod'
+            if sender is console:
+                if {_step} is 4 or 8 or 12 or 16:
+                    send "[Dice] Rolling... %{_tempPlayer}%" to console
+
+            # Dynamic deceleration
+            if loop-number > 12:
+                wait 5 ticks
+            else if loop-number > 8:
+                wait 3 ticks
+            else if loop-number > 4:
+                wait 2 ticks
+            else:
+                wait 1 tick
+
+        # ---------------------------------------------------
+        # STEP 3: FINAL SELECTION & CONSOLE OUTPUT
+        # ---------------------------------------------------
+        set {_winner} to random element out of {_candidates::*}
+        
+        # Victory audio & screen titles for online players
+        play sound "ui.toast.challenge_complete" at volume 1 to all players
+        send title "&a&lSELECTED!" with subtitle "&e%{_winner}% &fwas chosen!" to all players for 3 seconds with fade in 0.2 seconds and fade out 0.5 seconds
+        
+        # Chat message sent to everyone including console
+        broadcast "&6&l[Dice] &eThe dice landed on &b&l%{_winner}%&e!"
+        
+        # Explicit Console log summary
+        send "[Dice] ROLL COMPLETE! Selected player: %{_winner}%" to console
+        
+        # Reset rolling lock
+        delete {dice::rolling}

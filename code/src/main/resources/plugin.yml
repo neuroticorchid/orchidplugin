@@ -1,0 +1,167 @@
+name: OrchidPlugins
+version: ${orchid.version}
+main: com.orchidplugins.OrchidPlugins
+api-version: '1.21'
+authors: [neurosama]
+description: All-in-one plugin - rolls, giveaways, death game, polls, announcements, bounty, moderation and admin abuse.
+softdepend: [Vault, LuckPerms]
+
+commands:
+  rolldice:
+    description: Randomly roll a player with an animated title sequence.
+    aliases: [roll]
+    usage: /rolldice
+  react:
+    description: Start a chat reaction giveaway with the given phrase.
+    permission: orchid.react
+    usage: /react [phrase]
+  endreact:
+    description: Roll a winner for the active giveaway.
+    aliases: [rollgiveaway, endgiveaway]
+    permission: orchid.react.end
+    usage: /endreact
+  poll:
+    description: Start a poll - players vote in chat. No choices = YES/NO; use [brackets] or | pipes.
+    permission: orchid.poll
+    usage: /poll <question> [| or [choices]...]
+  endpoll:
+    description: End the active poll and show results.
+    aliases: [pollend]
+    permission: orchid.poll.end
+    usage: /endpoll
+  stopmoving:
+    description: Start the death game freeze. -die = instant death, -gay = gay mark (near-only glow). stop cancels.
+    permission: orchid.deathgame
+    usage: /stopmoving [-die|-gay|stop]
+  deathgame:
+    description: Start or stop the red light green light death game.
+    permission: orchid.deathgame
+    usage: /deathgame start [-die|-gay]|stop
+  vote:
+    description: Vote in an active death game vote.
+    usage: /vote die|gay
+  sannounce:
+    description: Show a full-screen announcement to all players.
+    permission: orchid.announce
+    usage: /sannounce <message>
+  srestart:
+    description: Start or cancel a server restart countdown.
+    permission: orchid.restart
+    usage: /srestart [time|cancel]
+  rollbounty:
+    description: Randomly place a bounty on a player.
+    aliases: [bountyroll]
+    usage: /rollbounty
+  warn:
+    description: Warn a player with an optional duration and reason.
+    permission: orchid.moderation.warn
+    usage: /warn <player> [duration] [reason]
+  unwarn:
+    description: Remove warnings from a player (online or offline).
+    permission: orchid.moderation.unwarn
+    usage: /unwarn <player> [count] [reason]
+  ban:
+    description: Ban a player by IGN/UUID with an optional duration.
+    permission: orchid.moderation.ban
+    usage: /ban <player> [duration] [reason]
+  banip:
+    description: Ban a player's IP address with an optional duration.
+    permission: orchid.moderation.banip
+    usage: /banip <player> [duration] [reason]
+  unban:
+    description: Unban a player by IGN.
+    permission: orchid.moderation.unban
+    usage: /unban <name>
+  suspendstaff:
+    description: Suspend a staff member via LuckPerms with an optional duration.
+    permission: orchid.moderation.suspendstaff
+    usage: /suspendstaff <player> [duration] [reason]
+  unsuspendstaff:
+    description: Restore a suspended staff member via LuckPerms.
+    permission: orchid.moderation.suspendstaff
+    usage: /unsuspendstaff <player>
+  adminabuse:
+    description: Admin abuse subcommands - bigcharacter, reach, speed, jump, health, reset.
+    aliases: [aa]
+    permission: orchid.adminabuse
+    usage: /adminabuse <bigcharacter|reach|speed|jump|health|reset> [player] [value] [-b|-s]
+  orchidplugins:
+    description: Show OrchidPlugins help, version, admin abuse log, and webhook test.
+    aliases: [orchidp, orchid]
+    usage: /orchidplugins help|version|abuselog [player] [limit]|webhook-test
+  checkbounty:
+    description: Check your current bounty or a player's bounty.
+    usage: /checkbounty [player]
+
+permissions:
+  orchid.*:
+    description: All OrchidPlugins permissions.
+    default: op
+    children:
+      orchid.react: true
+      orchid.react.end: true
+      orchid.poll: true
+      orchid.poll.end: true
+      orchid.deathgame: true
+      orchid.announce: true
+      orchid.restart: true
+      orchid.moderation.warn: true
+      orchid.moderation.unwarn: true
+      orchid.moderation.ban: true
+      orchid.moderation.banip: true
+      orchid.moderation.unban: true
+      orchid.moderation.suspendstaff: true
+      orchid.adminabuse: true
+      orchid.adminabuse.log: true
+      orchid.discord.test: true
+  orchid.roll:
+    description: Use /rolldice.
+    default: true
+  orchid.react:
+    description: Start a giveaway.
+    default: op
+  orchid.react.end:
+    description: End a giveaway.
+    default: op
+  orchid.poll:
+    description: Start a poll.
+    default: op
+  orchid.poll.end:
+    description: End a poll.
+    default: op
+  orchid.deathgame:
+    description: Start/stop the death game.
+    default: op
+  orchid.announce:
+    description: Use /sannounce.
+    default: op
+  orchid.restart:
+    description: Use /srestart.
+    default: op
+  orchid.moderation.warn:
+    description: Warn players.
+    default: op
+  orchid.moderation.unwarn:
+    description: Remove warnings.
+    default: op
+  orchid.moderation.ban:
+    description: Ban players by IGN.
+    default: op
+  orchid.moderation.banip:
+    description: Ban players by IP.
+    default: op
+  orchid.moderation.unban:
+    description: Unban players.
+    default: op
+  orchid.moderation.suspendstaff:
+    description: Suspend staff members.
+    default: op
+  orchid.adminabuse:
+    description: Use /adminabuse subcommands.
+    default: op
+  orchid.adminabuse.log:
+    description: Browse the /adminabuse audit log (/orchidplugins abuselog).
+    default: op
+  orchid.discord.test:
+    description: Send a test Discord webhook (/orchidplugins webhook-test).
+    default: op

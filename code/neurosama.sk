@@ -1,0 +1,159 @@
+# ==============================================================================
+#                 Unicode On-Screen Announcer & Server Restart
+# ==============================================================================
+
+options:
+    prefix: <red>⚠️ <b>[ꜱᴇʀᴠᴇʀ]</b>
+
+variables:
+    {restart::active} = false
+
+# Helper function to parse inputs like 1h, 3m, 45s, 1h30m, or raw numbers (e.g. 60)
+function parseTimeInput(input: text) :: integer:
+    if {_input} parsed as integer is set:
+        return {_input} parsed as integer
+    
+    set {_temp} to {_input}
+    set {_totalSeconds} to 0
+    
+    # Parse Hours (e.g. 1h)
+    if {_temp} contains "h":
+        set {_split::*} to {_temp} split at "h"
+        set {_num} to {_split::1} parsed as integer
+        if {_num} is set:
+            add ({_num} * 3600) to {_totalSeconds}
+        set {_temp} to {_split::2}
+        
+    # Parse Minutes (e.g. 3m)
+    if {_temp} contains "m":
+        set {_split::*} to {_temp} split at "m"
+        set {_num} to {_split::1} parsed as integer
+        if {_num} is set:
+            add ({_num} * 60) to {_totalSeconds}
+        set {_temp} to {_split::2}
+        
+    # Parse Seconds (e.g. 45s)
+    if {_temp} contains "s":
+        replace all "s" with "" in {_temp}
+        set {_num} to {_temp} parsed as integer
+        if {_num} is set:
+            add {_num} to {_totalSeconds}
+            
+    if {_totalSeconds} > 0:
+        return {_totalSeconds}
+    return -1
+
+
+# Native Skript helper function to format seconds into clean time strings (e.g. 1h 30m, 3m, 45s)
+function formatSeconds(seconds: integer) :: text:
+    set {_s} to {_seconds}
+    set {_h} to 0
+    set {_m} to 0
+    
+    while {_s} >= 3600:
+        add 1 to {_h}
+        subtract 3600 from {_s}
+    while {_s} >= 60:
+        add 1 to {_m}
+        subtract 60 from {_s}
+        
+    set {_result} to ""
+    if {_h} > 0:
+        set {_result} to "%{_h}%h "
+    if {_m} > 0:
+        set {_result} to "%{_result}%%{_m}%m "
+    
+    # Clean check split for Skript compatibility
+    if {_s} > 0:
+        set {_result} to "%{_result}%%{_s}%s"
+    else if {_result} is "":
+        set {_result} to "0s"
+        
+    return {_result}
+# ------------------------------------------------------------------------------
+# 1. On-Screen Announcement Command: /sannounce <message>
+# ------------------------------------------------------------------------------
+command /sannounce [<text>]:
+    permission: admin.announce
+    permission message: "<red>❌ ʏᴏᴜ ᴅᴏ ɴᴏᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪꜱꜱɪᴏɴ ᴛᴏ ᴜꜱᴇ ᴛʜɪꜱ."
+    trigger:
+        if arg-1 is not set:
+            send "<red>USAGE: /sannounce <message>" to player
+            stop
+        
+        # Display full-screen Title & Subtitle in Unicode
+        send title "<gold>📢 ᴀɴɴᴏᴜɴᴄᴇᴍᴇɴᴛ" with subtitle "<yellow>%arg-1%" to all players for 5 seconds
+        
+        # Display Action Bar at the bottom of the screen
+        send action bar "<gold>⚡ <yellow>%arg-1%" to all players
+        
+        # Play subtle chime sound effect
+        play sound "block.note_block.pling" with volume 1.0 and pitch 2.0 to all players
+
+
+# ------------------------------------------------------------------------------
+# 2. Automated Server Restart Countdown: /srestart [time|cancel]
+# ------------------------------------------------------------------------------
+command /srestart [<text="60s">]:
+    permission: admin.restart
+    permission message: "<red>❌ ʏᴏᴜ ᴅᴏ ɴᴏᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪꜱꜱɪᴏɴ ᴛᴏ ᴜꜱᴇ ᴛʜɪꜱ."
+    trigger:
+        # Check for cancellation command
+        if arg-1 is "cancel":
+            if {restart::active} is false:
+                send "<red>❌ ᴛʜᴇʀᴇ ɪꜱ ɴᴏ ᴀᴄᴛɪᴠᴇ ʀᴇꜱᴛᴀʀᴛ ᴄᴏᴜɴᴛᴅᴏᴡɴ ᴛᴏ ᴄᴀɴᴄᴇʟ." to player
+                stop
+            set {restart::active} to false
+            broadcast "{@prefix} <green>ꜱᴇʀᴠᴇʀ ʀᴇꜱᴛᴀʀᴛ ʜᴀꜱ ʙᴇᴇɴ ᴄᴀɴᴄᴇʟᴇᴅ!"
+            send title "<green>✅ ʀᴇꜱᴛᴀʀᴛ ᴄᴀɴᴄᴇʟᴇᴅ" with subtitle "<gray>ᴛʜᴇ ꜱᴇʀᴠᴇR ᴡɪʟʟ ʀᴇᴍᴀɪɴ ᴏɴʟɪɴᴇ." to all players for 3 seconds
+            stop
+
+        # Prevent duplicate countdown loops
+        if {restart::active} is true:
+            send "<red>❌ ᴀ ʀᴇꜱᴛᴀʀᴛ ᴄᴏᴜɴᴛᴅᴏᴡɴ ɪꜱ ᴀʟʀᴇᴀᴅʏ ɪɴ ᴘʀᴏɢʀᴇꜱꜱ! ᴜꜱᴇ <yellow>/srestart cancel<red> ᴛᴏ ꜱᴛᴏᴘ ɪᴛ." to player
+            stop
+
+        set {_seconds} to parseTimeInput(arg-1)
+        
+        if {_seconds} <= 0:
+            send "<red>❌ ɪɴᴠᴀʟɪᴅ ᴛɪᴍᴇ ꜰᴏʀᴍᴀᴛ! ᴜꜱᴇ ꜰᴏʀᴍᴀᴛꜱ ʟɪᴋᴇ 1h, 3m, 45s, 1h30m, 60, ᴏʀ cancel." to player
+            stop
+
+        set {restart::active} to true
+        set {_formatted} to formatSeconds({_seconds})
+        broadcast "{@prefix} <yellow>ꜱᴇʀᴠᴇʀ ʀᴇꜱᴛᴀʀᴛ ɪɴɪᴛɪᴀᴛᴇᴅ! ʀᴇꜱᴛᴀʀᴛɪɴɢ ɪɴ <red>%{_formatted}%<yellow>..."
+        
+        loop {_seconds} times:
+            # Abort loop if restart was canceled
+            if {restart::active} is false:
+                stop
+                
+            # On-screen notifications at key countdown milestones
+            if {_seconds} is 3600, 1800, 900, 600, 300, 60, 30, 15, 10, 5, 4, 3, 2 or 1:
+                set {_timeLeft} to formatSeconds({_seconds})
+                send title "<red>⚠️ ꜱᴇʀᴠᴇʀ ʀᴇꜱᴛᴀʀᴛ" with subtitle "<yellow>ʀᴇꜱᴛᴀRᴛɪɴɢ ɪɴ <red>%{_timeLeft}%<yellow>!" to all players for 2 seconds
+                send action bar "<gold>⚡ ᴘʟᴇᴀꜱᴇ ꜰɪɴᴅ ᴀ ꜱᴀꜰᴇ ꜱᴘᴏᴛ!" to all players
+                
+                if {_seconds} <= 5:
+                    play sound "block.note_block.pling" with volume 1.0 and pitch 2.0 to all players
+                else:
+                    play sound "block.note_block.bit" with volume 1.0 and pitch 1.0 to all players
+            
+            wait 1 second
+            subtract 1 from {_seconds}
+        
+        # Ensure it hasn't been canceled during the final loop iteration
+        if {restart::active} is false:
+            stop
+
+        # Final Screen Title & Kick / Shutdown Execution
+        send title "<dark_red>🛑 ʀᴇꜱᴛᴀʀᴛɪɴɢ..." with subtitle "<gray>ꜱᴇᴇ ʏᴏᴜ ꜱᴏᴏɴ!" to all players for 3 seconds
+        wait 2 seconds
+        
+        # Kick remaining players with Unicode reason
+        loop all players:
+            kick loop-player due to "<red>🔄 <b>ꜱᴇʀᴠᴇʀ ɪꜱ ʀᴇꜱᴛᴀʀᴛɪɴɢ...</b><nl><gray>ᴘʟᴇᴀꜱᴇ ʀᴇᴊᴏɪɴ ɪɴ ᴀ ꜰᴇᴡ ᴍᴏᴍᴇɴᴛꜱ!"
+            
+        wait 1 second
+        set {restart::active} to false
+        execute console command "restart"

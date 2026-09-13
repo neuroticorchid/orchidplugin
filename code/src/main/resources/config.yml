@@ -1,0 +1,97 @@
+# OrchidPlugins configuration
+
+# Server name shown (with full Minecraft formatting) on poll broadcasts.
+# Legacy color/format codes are translated to MiniMessage in-game.
+server-name: "&l&bCLOUDREND SMP"
+
+# Poll settings
+poll:
+  seconds: 30
+
+# /srestart default when no time is given
+restart:
+  default-time: "60s"
+
+# Death game settings
+deathgame:
+  countdown-seconds: 5
+  vote-seconds: 10
+  # -gay tag glow only appears when another player is this close (blocks).
+  # Keeps victims' bases hidden from far-away raiders.
+  glow-distance: 24
+
+# /rollbounty amounts
+bounty:
+  min-amount: 500
+  max-amount: 5000
+
+# Whether /adminabuse is public by default.
+# false = silent (executor + console only); -b forces public, -s forces silent.
+admin-abuse:
+  broadcast-by-default: false
+
+# Whether moderation actions broadcast publicly.
+# false = private (executor + console only).
+moderation-broadcast:
+  warn: true
+  ban: true
+  banip: true
+  unban: true
+  unwarn: false
+  suspendstaff: true
+  unsuspendstaff: true
+
+# Message prefixes (MiniMessage format)
+prefixes:
+  giveaway: "<light_purple><bold>[GIVEAWAY]</bold></light_purple> <yellow>"
+  deathgame: "<red><bold>[DEATH GAME]</bold></red> <yellow>"
+  bounty: "<dark_red><bold>[BOUNTY]</bold></dark_red> "
+  warn: "<red>[WARN] "
+  ban: "<red>[BAN] "
+  ipban: "<dark_red>[IP-BAN] "
+  unban: "<green>[UNBAN] "
+  unwarn: "<green>[UNWARN] "
+  suspend: "<red><bold>[SUSPEND]</bold></red> "
+  abuse: "<light_purple>[ABUSE] "
+  server: "<yellow><bold>[SERVER]</bold></yellow> "
+  announce: "<gold>\uD83D\uDCE2 ANNOUNCEMENT"
+
+# SQLite audit database (plugins/OrchidPlugins/<filename>).
+# Stores every /adminabuse execution - executor, target, action, value, time.
+database:
+  filename: "data.db"
+
+# Discord webhooks - each event can use its own URL (e.g. different channels).
+# An event sends only if the master switch AND its own toggle are on.
+# If an event has an empty url, discord-webhook.default-url is used.
+discord-webhook:
+  enabled: false
+  default-url: ""
+  events:
+    warn:
+      enabled: true
+      url: ""
+    ban:
+      enabled: true
+      url: ""
+    banip:
+      enabled: true
+      url: ""
+    unban:
+      enabled: true
+      url: ""
+    unwarn:
+      enabled: true
+      url: ""
+    suspendstaff:
+      enabled: true
+      url: ""
+    unsuspendstaff:
+      enabled: true
+      url: ""
+    bounty:
+      enabled: true
+      url: ""
+    admin-abuse:
+      enabled: true
+      url: ""

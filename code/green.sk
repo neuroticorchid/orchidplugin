@@ -1,0 +1,148 @@
+# =========================================================
+# Red Light, Green Light with Voting System
+# Options: Die vs Be Gay (Highest Votes Wins)
+# Requirements: Skript (1.16+)
+# =========================================================
+
+options:
+    prefix: &c&l[DEATH GAME]&r
+
+# 1. ADMIN COMMANDS
+command /deathgame <text>:
+    permission: op
+    trigger:
+        if arg-1 is "start":
+            if {deathgame::starting} is set:
+                send "{@prefix} &cThe game is already starting!" to player
+                stop
+            if {deathgame::active} is true:
+                send "{@prefix} &cThe game is already running!" to player
+                stop
+
+            set {deathgame::starting} to true
+            
+            # --- 5 SECOND COUNTDOWN ---
+            broadcast "{@prefix} &eGame starting in **5 seconds**... Get ready!"
+            play sound "block.note_block.pling" to all players
+            wait 1 second
+            
+            broadcast "{@prefix} &eGame starting in **4 seconds**..."
+            play sound "block.note_block.pling" to all players
+            wait 1 second
+            
+            broadcast "{@prefix} &eGame starting in **3 seconds**..."
+            play sound "block.note_block.pling" to all players
+            wait 1 second
+            
+            broadcast "{@prefix} &cGame starting in **2 seconds**..."
+            play sound "block.note_block.pling" to all players
+            wait 1 second
+            
+            broadcast "{@prefix} &cGame starting in **1 second**..."
+            play sound "block.note_block.pling" to all players
+            wait 1 second
+
+            if {deathgame::starting} is not set:
+                stop
+
+            delete {deathgame::starting}
+            set {deathgame::active} to true
+            
+            broadcast "{@prefix} &a&lFREEZE! DO NOT MOVE!"
+            play sound "entity.ender_dragon.growl" to all players
+            
+            loop all players:
+                set {deathgame::pos::%loop-player's uuid%} to location of loop-player
+
+        else if arg-1 is "stop":
+            delete {deathgame::starting}
+            delete {deathgame::active}
+            delete {deathgame::voting}
+            delete {deathgame::target}
+            delete {deathgame::votes::*}
+            delete {deathgame::has_voted::*}
+            delete {deathgame::pos::*}
+            broadcast "{@prefix} &aThe game has been canceled/ended."
+
+# 2. VOTING COMMAND FOR PLAYERS
+command /vote <text>:
+    trigger:
+        if {deathgame::voting} is not set:
+            send "{@prefix} &cThere is no active vote right now!" to player
+            stop
+        if {deathgame::has_voted::%player's uuid%} is set:
+            send "{@prefix} &cYou have already cast your vote!" to player
+            stop
+            
+        if arg-1 is "die":
+            add 1 to {deathgame::votes::die}
+            set {deathgame::has_voted::%player's uuid%} to true
+            send "{@prefix} &aYou voted for &c&lDIE&a!" to player
+            play sound "block.note_block.bell" to player
+            
+        else if arg-1 is "gay":
+            add 1 to {deathgame::votes::gay}
+            set {deathgame::has_voted::%player's uuid%} to true
+            send "{@prefix} &aYou voted for &d&lBE GAY&a!" to player
+            play sound "block.note_block.bell" to player
+            
+        else:
+            send "{@prefix} &cInvalid option! Use &e/vote die &cor &e/vote gay&c." to player
+
+# 3. MOVEMENT DETECTION & TRIGGER VOTING
+on player move:
+    if {deathgame::active} is true:
+        if {deathgame::pos::%player's uuid%} is set:
+            if distance between location of player and {deathgame::pos::%player's uuid%} > 0.1:
+                
+                # Stop game loop immediately
+                delete {deathgame::active}
+                delete {deathgame::pos::*}
+                
+                # Setup target player and vote state
+                set {deathgame::target} to player
+                set {deathgame::voting} to true
+                set {deathgame::votes::die} to 0
+                set {deathgame::votes::gay} to 0
+                delete {deathgame::has_voted::*}
+                
+                # Broadcast start of vote
+                broadcast "{@prefix} &b%player% &7moved first!"
+                broadcast "{@prefix} &e&lVOTING STARTED! &7You have 10 seconds:"
+                broadcast "{@prefix} Type &c&l/vote die &7or &d&l/vote gay"
+                play sound "entity.experience_orb.pickup" to all players
+                
+                # 10 Second Voting Countdown
+                wait 10 seconds
+                
+                # --- RESOLVE VOTES ---
+                delete {deathgame::voting}
+                
+                set {_die} to {deathgame::votes::die}
+                set {_gay} to {deathgame::votes::gay}
+                set {_victim} to {deathgame::target}
+                
+                broadcast "{@prefix} &e&lVOTING ENDED!"
+                broadcast "{@prefix} &7Results: &cDie (%{_die}%) &7vs &dBe Gay (%{_gay}%)"
+                
+                # Logic: If 'Gay' gets higher or equal votes to 'Die'
+                if {_gay} >= {_die}:
+                    broadcast "{@prefix} &d&l%{_victim}% WAS VOTED TO BE GAY! 🌈"
+                    send title "&d&lYOU ARE NOW GAY!" with subtitle "&eThe server has spoken!" to {_victim} for 5 seconds
+                    apply glowing 1 to {_victim} for 30 seconds
+                    play sound "entity.player.levelup" to all players
+                else:
+                    broadcast "{@prefix} &c&l%{_victim}% WAS VOTED TO DIE! ⚡"
+                    kill {_victim}
+                    strike lightning effect at location of {_victim}
+                    play sound "entity.lightning_bolt.thunder" to all players
+                
+                # Cleanup vote state
+                delete {deathgame::target}
+                delete {deathgame::votes::*}
+                delete {deathgame::has_voted::*}
+
+# 4. PREVENT NEW PLAYERS FROM MOVING IF JOINING MID-GAME
+on join:
+    if {deathgame::active} is true:
+        set {deathgame::pos::%player's uuid%} to location of player

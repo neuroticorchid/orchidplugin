@@ -1,0 +1,111 @@
+# =======================================================
+#    RANDOM BOUNTY PLAYER ROLLER (VANILLA SKRIPT)
+# =======================================================
+
+command /rollbounty:
+    aliases: /bountyroll
+    trigger:
+        # Prevent running multiple rolls simultaneously
+        if {bounty::rolling} is set:
+            send "&cPlease wait for the current bounty roll to finish!" to sender
+            stop
+            
+        set {bounty::rolling} to true
+        
+        # ---------------------------------------------------
+        # STEP 1: PLAYER SELECTION CHECK
+        # ---------------------------------------------------
+        set {_candidates::*} to all players
+        
+        # Ensure there are players online to pick from
+        if size of {_candidates::*} is 0:
+            send "[Bounty] No online players available to select!" to sender
+            delete {bounty::rolling}
+            stop
+
+        # ---------------------------------------------------
+        # STEP 2: ANIMATION SEQUENCE
+        # ---------------------------------------------------
+        if sender is console:
+            send "[Bounty] Rolling bounty animation started..." to console
+
+        # Audio cue for in-game players
+        play sound "block.note_block.chime" at volume 1 to all players
+
+        set {_step} to 0
+
+        loop 16 times:
+            add 1 to {_step}
+            set {_tempPlayer} to random element out of {_candidates::*}
+            
+            # Send title animation to all online players
+            send title "&c&l🎯 TARGETING..." with subtitle "&e&l%{_tempPlayer}%" to all players for 1 second with fade in 0 seconds and fade out 0 seconds
+            
+            # Play tick sound to online players
+            play sound "block.note_block.hat" at volume 1 and pitch 1.5 to all players
+            
+            # Print console status every 4 iterations
+            if sender is console:
+                if {_step} is 4 or 8 or 12 or 16:
+                    send "[Bounty] Rolling... %{_tempPlayer}%" to console
+
+            # Dynamic deceleration
+            if loop-number > 12:
+                wait 5 ticks
+            else if loop-number > 8:
+                wait 3 ticks
+            else if loop-number > 4:
+                wait 2 ticks
+            else:
+                wait 1 tick
+
+        # ---------------------------------------------------
+        # STEP 3: BOUNTY GENERATION & ANNOUNCEMENT
+        # ---------------------------------------------------
+        # Pick final target
+        set {_target} to random element out of {_candidates::*}
+        
+        # Generate a random bounty amount ($500 - $5000)
+        set {_bountyAmount} to a random integer between 500 and 5000
+        
+        # Add bounty amount to candidate's UUID variable
+        add {_bountyAmount} to {bounty::active::%{_target}'s uuid%}
+        
+        # Audio & visual title alerts
+        play sound "entity.lightning_bolt.thunder" at volume 0.5 to all players
+        send title "&c&lBOUNTY PLACED!" with subtitle "&e%{_target}% &fhas &a$%{_bountyAmount}% &fon their head!" to all players for 3 seconds with fade in 0.2 seconds and fade out 0.5 seconds
+        
+        # Broadcast details to chat
+        broadcast "&4&l[BOUNTY] &c&l%{_target}% &7is now targeted with a &a$%{_bountyAmount}% &7reward!"
+        
+        # Console output summary
+        send "[Bounty] ROLL COMPLETE! Target: %{_target}% | Bounty: $%{_bountyAmount}%" to console
+        
+        # Reset rolling lock
+        delete {bounty::rolling}
+
+# ---------------------------------------------------
+# STEP 4: SECURE BOUNTY CLAIMING
+# ---------------------------------------------------
+on death of player:
+    # Verify the killer is a valid player
+    if attacker is a player:
+        # PREVENT SELF-CLAIMING: Ensure killer is NOT the victim
+        if attacker is not victim:
+            # Check if victim has an active bounty
+            if {bounty::active::%victim's uuid%} is set:
+                set {_reward} to {bounty::active::%victim's uuid%}
+                
+                # Pay out reward balance to the killer
+                add {_reward} to attacker's balance
+                
+                # Global announcement & sound trigger
+                broadcast "&4&l[BOUNTY] &b&l%attacker% &7claimed the &a$%{_reward}% &7bounty on &c&l%victim%&7!"
+                play sound "ui.toast.challenge_complete" at volume 1 to attacker
+                
+                # Clear active bounty
+                delete {bounty::active::%victim's uuid%}
+        else:
+            # Optional notification if they try to kill themselves
+            if {bounty::active::%victim's uuid%} is set:
+                send "&cYou cannot claim your own bounty!" to victim

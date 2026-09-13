@@ -1,0 +1,124 @@
+# =======================================================
+#    CHAT REACTION GIVEAWAY SYSTEM (FIXED MATCHING)
+# =======================================================
+
+# ---------------------------------------------------
+# STEP 1: START THE GIVEAWAY WITH A PHRASE
+# ---------------------------------------------------
+command /react [<text>]:
+    permission: op
+    permission message: &cOnly admins can start a reaction giveaway.
+    trigger:
+        if {giveaway::status} is set:
+            send "&c[Giveaway] A giveaway is already running! Run /endreact to roll the winner." to sender
+            stop
+
+        delete {giveaway::entries::*}
+        delete {giveaway::entry_names::*}
+
+        # Fixed Skript list syntax using 'and'
+        if arg-1 is set:
+            set {giveaway::target_phrase} to arg-1
+        else:
+            set {_phrases::*} to "neurosamaisnotgay", "vedaliscool", "cutevtuber", "evilneuro", "gymbag", and "turtle"
+            set {giveaway::target_phrase} to random element out of {_phrases::*}
+
+        set {giveaway::status} to "open"
+
+        play sound "block.note_block.chime" at volume 1 to all players
+        send title "&d&lGIVEAWAY STARTED!" with subtitle "&eType &b%{giveaway::target_phrase}% &ein CHAT to enter!" to all players for 4 seconds with fade in 0.2 seconds and fade out 0.5 seconds
+        
+        broadcast "&d&l[GIVEAWAY] &eA new giveaway has started!"
+        broadcast "&d&l[GIVEAWAY] &eType &b&l%{giveaway::target_phrase}% &ein chat to enter!"
+
+
+# ---------------------------------------------------
+# STEP 2: INTERCEPT CHAT (USES UNFORMATTED TEXT)
+# ---------------------------------------------------
+on chat:
+    if {giveaway::status} is "open":
+        # Strips out color codes and extra formatting for exact phrase matching
+        set {_msg} to unformatted message
+        
+        if {_msg} is equal to {giveaway::target_phrase}:
+            cancel event
+
+            if {giveaway::entries::%player's uuid%} is set:
+                send "&c[Giveaway] You have already entered this giveaway!" to player
+                stop
+
+            # Register entry
+            set {giveaway::entries::%player's uuid%} to true
+            add player's name to {giveaway::entry_names::*}
+
+            send "&a[Giveaway] Your vote was placed in bet!" to player
+            broadcast "&7[Giveaway] &b%player%&7's vote was placed in bet!"
+
+
+# ---------------------------------------------------
+# STEP 3: END GIVEAWAY & ROLL RANDOM WINNER
+# ---------------------------------------------------
+command /endreact:
+    aliases: /rollgiveaway, /endgiveaway
+    permission: op
+    permission message: &cOnly admins can end the giveaway.
+    trigger:
+        if {giveaway::status} is not set:
+            send "[Giveaway] No active giveaway running! Start one with /react <phrase>." to sender
+            stop
+
+        if {giveaway::status} is "rolling":
+            send "[Giveaway] Already rolling a winner!" to sender
+            stop
+
+        set {giveaway::status} to "rolling"
+
+        if size of {giveaway::entry_names::*} is 0:
+            broadcast "&c&l[GIVEAWAY] &cThe giveaway ended, but no one entered!"
+            send "[Giveaway] Ended with 0 entries." to console
+            delete {giveaway::status}
+            delete {giveaway::target_phrase}
+            stop
+
+        if sender is console:
+            send "[Giveaway] Rolling giveaway animation started..." to console
+
+        play sound "block.note_block.chime" at volume 1 to all players
+
+        set {_step} to 0
+
+        loop 16 times:
+            add 1 to {_step}
+            set {_tempEntrant} to random element out of {giveaway::entry_names::*}
+
+            send title "&d&l🎁 PICKING WINNER..." with subtitle "&b&l%{_tempEntrant}%" to all players for 1 second with fade in 0 seconds and fade out 0 seconds
+            play sound "block.note_block.hat" at volume 1 and pitch 1.5 to all players
+
+            if sender is console:
+                if {_step} is 4 or 8 or 12 or 16:
+                    send "[Giveaway] Rolling... %{_tempEntrant}%" to console
+
+            if loop-number > 12:
+                wait 5 ticks
+            else if loop-number > 8:
+                wait 3 ticks
+            else if loop-number > 4:
+                wait 2 ticks
+            else:
+                wait 1 tick
+
+        # ---------------------------------------------------
+        # STEP 4: SELECT WINNER
+        # ---------------------------------------------------
+        set {_winner} to random element out of {giveaway::entry_names::*}
+
+        play sound "ui.toast.challenge_complete" at volume 1 to all players
+        send title "&a&lGIVEAWAY WINNER!" with subtitle "&b&l%{_winner}% &ewon the giveaway!" to all players for 4 seconds with fade in 0.2 seconds and fade out 0.5 seconds
+
+        broadcast "&d&l[GIVEAWAY] &eCongratulations &b&l%{_winner}%&e! You won the giveaway!"
+        send "[Giveaway] WINNER SELECTED: %{_winner}% (Total entries: %size of {giveaway::entry_names::*}%)" to console
+
+        delete {giveaway::entries::*}
+        delete {giveaway::entry_names::*}
+        delete {giveaway::target_phrase}
+        delete {giveaway::status}
