@@ -1,0 +1,106 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      promote_stable:
+        description: "Also publish the stable channel as a full release"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Read version
+        id: version
+        run: |
+          BASE="$(sed -n 's:.*<orchid.base>\([^<]*\)</orchid.base>.*:\1:p' code/pom.xml | head -1)"
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+          echo "neuro=$BASE-neuro" >> "$GITHUB_OUTPUT"
+          echo "stable=$BASE-stable" >> "$GITHUB_OUTPUT"
+          echo "Detected OrchidPlugins base version: $BASE"
+
+      - name: Build neuro channel
+        run: mvn -B -q -f code/pom.xml clean package
+
+      - name: Collect neuro jar
+        run: |
+          mkdir -p dist
+          cp "code/target/OrchidPlugins-${{ steps.version.outputs.neuro }}.jar" dist/
+
+      - name: Build stable channel
+        run: mvn -B -q -f code/pom.xml clean package -Pstable
+
+      - name: Collect stable jar
+        run: cp "code/target/OrchidPlugins-${{ steps.version.outputs.stable }}.jar" dist/
+
+      - name: Upload channel jars (workflow artifacts)
+        uses: actions/upload-artifact@v4
+        with:
+          name: OrchidPlugins-jars-${{ steps.version.outputs.base }}
+          path: dist/*.jar
+          if-no-files-found: error
+
+      - name: Publish neuro pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER="${{ steps.version.outputs.neuro }}"
+          TAG="v${VER}"
+          gh release delete "$TAG" --yes --cleanup-tag || true
+          cat > notes.md <<EOF
+          Auto-built from \`main\` (commit \`${{ github.sha }}\`).
+
+          This is the **neuro (testing) channel** pre-release. Latest features for play-testing.
+
+          ## Files
+          - \`OrchidPlugins-${VER}.jar\`
+
+          ## Install
+          1. Stop the server (no jar hot-swapping, no \`/reload\`).
+          2. Drop the jar into \`plugins/\`.
+          3. Start. Run \`/orchidplugins update\` on a -neuro build to check for newer neuro builds here.
+          EOF
+          gh release create "$TAG" \
+            --title "OrchidPlugins ${VER} · pre-release" \
+            --prerelease \
+            --notes-file notes.md \
+            "dist/OrchidPlugins-${VER}.jar"
+
+      - name: Publish stable release
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.promote_stable }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER="${{ steps.version.outputs.stable }}"
+          TAG="v${VER}"
+          gh release delete "$TAG" --yes --cleanup-tag || true
+          cat > notes.md <<EOF
+          Promoted from \`main\` (commit \`${{ github.sha }}\`).
+
+          This is the **stable channel** release — the verified production build.
+
+          ## Files
+          - \`OrchidPlugins-${VER}.jar\`
+          EOF
+          gh release create "$TAG" \
+            --title "OrchidPlugins ${VER}" \
+            --notes-file notes.md \
+            "dist/OrchidPlugins-${VER}.jar"

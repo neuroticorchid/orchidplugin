@@ -2,6 +2,7 @@ package com.orchidplugins.commands;
 
 import com.orchidplugins.db.SqliteDatabase;
 import com.orchidplugins.managers.ConfigManager;
+import com.orchidplugins.managers.UpdateManager;
 import com.orchidplugins.managers.WebhookManager;
 import com.orchidplugins.util.Msg;
 import org.bukkit.command.Command;
@@ -19,18 +20,21 @@ import java.util.Locale;
 public final class OrchidPluginsCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBCOMMANDS = Arrays.asList(
-            "help", "version", "abuselog", "webhook-test", "reload");
+            "help", "version", "abuselog", "webhook-test", "reload", "update");
 
     private final Plugin plugin;
     private final ConfigManager configManager;
     private final SqliteDatabase database;
     private final WebhookManager webhook;
+    private final UpdateManager updateManager;
 
-    public OrchidPluginsCommand(Plugin plugin, ConfigManager configManager, SqliteDatabase database, WebhookManager webhook) {
+    public OrchidPluginsCommand(Plugin plugin, ConfigManager configManager, SqliteDatabase database,
+                                WebhookManager webhook, UpdateManager updateManager) {
         this.plugin = plugin;
         this.configManager = configManager;
         this.database = database;
         this.webhook = webhook;
+        this.updateManager = updateManager;
     }
 
     @Override
@@ -53,6 +57,17 @@ public final class OrchidPluginsCommand implements CommandExecutor, TabCompleter
                     return true;
                 }
                 webhook.sendTest(sender);
+                return true;
+            case "update":
+                if (!sender.hasPermission("orchid.update")) {
+                    Msg.send(sender, "<red>You don't have permission to use this command.");
+                    return true;
+                }
+                if (args.length >= 2 && args[1].equalsIgnoreCase("download")) {
+                    updateManager.download(sender);
+                } else {
+                    updateManager.check(sender);
+                }
                 return true;
             case "reload":
                 if (!sender.hasPermission("orchid.reload")) {
@@ -142,6 +157,7 @@ public final class OrchidPluginsCommand implements CommandExecutor, TabCompleter
         Msg.send(sender, "<yellow>/orchidplugins abuselog [player] [limit] <gray>- browse the /aa audit log");
         Msg.send(sender, "<yellow>/orchidplugins webhook-test <gray>- send a test Discord embed");
         Msg.send(sender, "<yellow>/orchidplugins reload <gray>- reload config.yml without restart");
+        Msg.send(sender, "<yellow>/orchidplugins update [download] <gray>- check GitHub for a newer <aqua>" + updateManager.channel() + " <gray>build");
         Msg.send(sender, "<yellow>/orchidplugins version <gray>- plugin info");
         Msg.send(sender, "<green>----------------");
     }

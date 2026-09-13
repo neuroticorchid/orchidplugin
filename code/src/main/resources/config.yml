@@ -1,5 +1,13 @@
 # OrchidPlugins configuration
 
+# Auto-updater - checks GitHub releases of orchidplugin for a newer jar.
+# channel: auto = same channel as the running jar (neuro/stable), or force one.
+update:
+  repo: "neuroticorchid/orchidplugin"
+  check-on-startup: true
+  channel: "auto"
+  auto-download: false
+
 # Server name shown (with full Minecraft formatting) on poll broadcasts.
 # Legacy color/format codes are translated to MiniMessage in-game.
 server-name: "&l&bCLOUDREND SMP"

@@ -33,6 +33,7 @@ import com.orchidplugins.managers.ModerationManager;
 import com.orchidplugins.managers.PollManager;
 import com.orchidplugins.managers.RestartManager;
 import com.orchidplugins.managers.SuspensionManager;
+import com.orchidplugins.managers.UpdateManager;
 import com.orchidplugins.managers.WebhookManager;
 import com.orchidplugins.util.Msg;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -53,6 +54,7 @@ public final class OrchidPlugins extends JavaPlugin {
     private SqliteDatabase database;
     private WebhookManager webhookManager;
     private PollManager pollManager;
+    private UpdateManager updateManager;
 
     @Override
     public void onEnable() {
@@ -62,6 +64,7 @@ public final class OrchidPlugins extends JavaPlugin {
         this.configManager = new ConfigManager(this);
         this.database = new SqliteDatabase(this, configManager.databaseFilename());
         this.webhookManager = new WebhookManager(this, configManager.getRaw());
+        this.updateManager = new UpdateManager(this, configManager);
         this.attributeManager = new AttributeManager();
         this.giveawayManager = new GiveawayManager();
         this.deathGameManager = new DeathGameManager(this);
@@ -74,6 +77,7 @@ public final class OrchidPlugins extends JavaPlugin {
         registerCommands();
         registerListeners();
         hookVault();
+        updateManager.startupCheck();
 
         getLogger().info("OrchidPlugins enabled.");
     }
@@ -115,7 +119,7 @@ public final class OrchidPlugins extends JavaPlugin {
         getCommand("unban").setExecutor(new UnbanCommand(moderationManager, configManager, webhookManager));
         getCommand("suspendstaff").setExecutor(new SuspendStaffCommand(this));
         getCommand("unsuspendstaff").setExecutor(new SuspendStaffCommand(this));
-        OrchidPluginsCommand orchid = new OrchidPluginsCommand(this, configManager, database, webhookManager);
+        OrchidPluginsCommand orchid = new OrchidPluginsCommand(this, configManager, database, webhookManager, updateManager);
         getCommand("orchidplugins").setExecutor(orchid);
         getCommand("orchidplugins").setTabCompleter(orchid);
         AdminAbuseCommand adminAbuse = new AdminAbuseCommand(attributeManager, configManager, this, database, webhookManager);
@@ -190,6 +194,10 @@ public final class OrchidPlugins extends JavaPlugin {
 
     public PollManager getPollManager() {
         return pollManager;
+    }
+
+    public UpdateManager getUpdateManager() {
+        return updateManager;
     }
 
     public AttributeManager getAttributeManager() {

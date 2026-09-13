@@ -6,7 +6,7 @@
 
     <groupId>com.orchidplugins</groupId>
     <artifactId>OrchidPlugins</artifactId>
-    <version>1.0.2-neuro</version>
+    <version>${orchid.base}-neuro</version>
     <packaging>jar</packaging>
 
     <name>OrchidPlugins</name>
@@ -16,7 +16,8 @@
         <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <paper.version>1.21.11-R0.1-SNAPSHOT</paper.version>
-        <orchid.version>1.0.3-neuro</orchid.version>
+        <orchid.base>1.0.4</orchid.base>
+        <orchid.version>${orchid.base}-neuro</orchid.version>
         <jar.name>OrchidPlugins-${orchid.version}</jar.name>
     </properties>
 
@@ -136,7 +137,7 @@
         <profile>
             <id>stable</id>
             <properties>
-                <orchid.version>1.0.2-stable</orchid.version>
+                <orchid.version>${orchid.base}-stable</orchid.version>
             </properties>
         </profile>
     </profiles>
