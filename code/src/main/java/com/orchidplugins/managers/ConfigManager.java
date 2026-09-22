@@ -56,8 +56,60 @@ public final class ConfigManager {
         return Math.max(1, config.getInt("deathgame.vote-seconds", 10));
     }
 
+    public int tpaCountdownSeconds() {
+        return Math.max(1, config.getInt("tpa.countdown-seconds", 5));
+    }
+
+    public int tpaRequestTtlSeconds() {
+        return Math.max(1, config.getInt("tpa.request-ttl-seconds", 60));
+    }
+
+    public int tpaTrapWindowSeconds() {
+        return Math.max(1, config.getInt("tpa.trap-window-seconds", 120));
+    }
+
+    public String tpaMessage(String key) {
+        return config.getString("prefixes.tpa", "<green><bold>[TPA]</bold></green> <yellow>") + key;
+    }
+
+    public String friendMessage(String key) {
+        return config.getString("prefixes.friend", "<aqua><bold>[FRIEND]</bold></aqua> <yellow>") + key;
+    }
+
     public int deathgameGlowDistance() {
         return Math.max(4, config.getInt("deathgame.glow-distance", 24));
+    }
+
+    public String smpWorld() {
+        return config.getString("smp.world", "world");
+    }
+
+    public double smpCenterX() {
+        return config.getDouble("smp.center-x", 0.0);
+    }
+
+    public double smpCenterZ() {
+        return config.getDouble("smp.center-z", 0.0);
+    }
+
+    public int smpStartRadius() {
+        return Math.max(1, config.getInt("smp.start-radius", 32));
+    }
+
+    public int smpEndRadius() {
+        return Math.max(smpStartRadius(), config.getInt("smp.end-radius", 10000));
+    }
+
+    public int smpStartSeconds() {
+        return Math.max(1, config.getInt("smp.start-seconds", 30));
+    }
+
+    public int smpSwellSeconds() {
+        return Math.max(1, config.getInt("smp.swell-seconds", 5));
+    }
+
+    public String smpPrefix() {
+        return config.getString("prefixes.smp", "<gold><bold>[SMP]</bold></gold> <yellow>");
     }
 
     public int bountyMinAmount() {

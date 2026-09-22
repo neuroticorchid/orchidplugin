@@ -139,6 +139,10 @@ public final class OrchidPluginsCommand implements CommandExecutor, TabCompleter
         Msg.send(sender, "<green>- Announcements --");
         Msg.send(sender, "<yellow>/sannounce <msg> <gray>- full-screen announcement");
         Msg.send(sender, "<yellow>/srestart [time|cancel] <gray>- restart countdown");
+        Msg.send(sender, "<green>- SMP Launch -----");
+        Msg.send(sender, "<yellow>/smp gather <gray>- shrink border to 0,0 and gather everyone");
+        Msg.send(sender, "<yellow>/smp start [seconds|now] <gray>- launch countdown + border expand + GO");
+        Msg.send(sender, "<yellow>/smp setborder [radius] [x] [z] <gray>- manually set the border");
         Msg.send(sender, "<green>- Bounty ---------");
         Msg.send(sender, "<yellow>/rollbounty <gray>- put a random bounty on a player");
         Msg.send(sender, "<yellow>/checkbounty [player] <gray>- check a bounty");

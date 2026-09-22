@@ -63,6 +63,30 @@ prefixes:
   abuse: "<light_purple>[ABUSE] "
   server: "<yellow><bold>[SERVER]</bold></yellow> "
   announce: "<gold>\uD83D\uDCE2 ANNOUNCEMENT"
+  tpa: "<green><bold>[TPA]</bold></green> <yellow>"
+  friend: "<aqua><bold>[FRIEND]</bold></aqua> <yellow>"
+  smp: "<gold><bold>[SMP]</bold></gold> <yellow>"
+
+# TPA settings
+tpa:
+  countdown-seconds: 5
+  request-ttl-seconds: 60
+  trap-window-seconds: 120
+
+# /smp SMP-season launch countdown.
+# Gather everyone at the center, wait, then /smp start counts down and swells the border outward.
+smp:
+  world: "world"
+  center-x: 0
+  center-z: 0
+  # Small border radius around the center during the gather phase.
+  start-radius: 32
+  # Border radius the world expands to at launch.
+  end-radius: 10000
+  # Default countdown for /smp start when no seconds are given.
+  start-seconds: 30
+  # How long the border takes to swell (animate) at launch, in seconds.
+  swell-seconds: 5
 
 # SQLite audit database (plugins/OrchidPlugins/<filename>).
 # Stores every /adminabuse execution - executor, target, action, value, time.

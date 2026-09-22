@@ -16,7 +16,7 @@
         <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <paper.version>1.21.11-R0.1-SNAPSHOT</paper.version>
-        <orchid.base>1.0.4</orchid.base>
+        <orchid.base>1.0.6</orchid.base>
         <orchid.version>${orchid.base}-neuro</orchid.version>
         <jar.name>OrchidPlugins-${orchid.version}</jar.name>
     </properties>

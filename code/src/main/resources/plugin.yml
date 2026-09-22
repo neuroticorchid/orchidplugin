@@ -48,6 +48,10 @@ commands:
     description: Start or cancel a server restart countdown.
     permission: orchid.restart
     usage: /srestart [time|cancel]
+  smp:
+    description: SMP-season launch countdown - gather at 0,0, count down, expand the border.
+    permission: orchid.smp
+    usage: /smp <start [seconds|now]|gather|setborder [radius] [x] [z]>
   rollbounty:
     description: Randomly place a bounty on a player.
     aliases: [bountyroll]
@@ -92,6 +96,49 @@ commands:
   checkbounty:
     description: Check your current bounty or a player's bounty.
     usage: /checkbounty [player]
+  tpa:
+    description: Send a TPA request to teleport to another player.
+    permission: orchid.tpa.use
+    usage: /tpa <player>
+  tpahere:
+    description: Send a TPAHERE request to bring a player to you.
+    permission: orchid.tpa.use
+    usage: /tpahere <player>
+  tpaaccept:
+    description: Accept an incoming TP request.
+    aliases: [tpyes]
+    permission: orchid.tpa.use
+    usage: /tpaaccept [player]
+  tpadeny:
+    description: Deny an incoming TP request.
+    aliases: [tpno]
+    permission: orchid.tpa.use
+    usage: /tpadeny [player]
+  tptoggle:
+    description: Toggle TPA/TPAHERE on or off globally or for a player.
+    permission: orchid.tpa.use
+    usage: /tptoggle <all|player> <on|off> [all|tpa|tpahere]
+  tpauto:
+    description: Toggle auto-accepting TPA requests.
+    permission: orchid.tpa.use
+    usage: /tpauto [all|tpa|tpahere] [on|off]
+  tpsettings:
+    description: Open the TPA settings dialog or chest GUI.
+    permission: orchid.tpa.settings
+    usage: /tpsettings [player]
+  friend:
+    description: Manage friends - add, remove, or list.
+    aliases: [f]
+    permission: orchid.tpa.use
+    usage: /friend <add|remove|list> [player]
+  faccept:
+    description: Accept a pending friend request.
+    permission: orchid.tpa.use
+    usage: /faccept [player]
+  fdeny:
+    description: Deny a pending friend request.
+    permission: orchid.tpa.use
+    usage: /fdeny [player]
 
 permissions:
   orchid.*:
@@ -105,6 +152,7 @@ permissions:
       orchid.deathgame: true
       orchid.announce: true
       orchid.restart: true
+      orchid.smp: true
       orchid.moderation.warn: true
       orchid.moderation.unwarn: true
       orchid.moderation.ban: true
@@ -116,6 +164,12 @@ permissions:
       orchid.discord.test: true
       orchid.reload: true
       orchid.update: true
+      orchid.tpa.use: true
+      orchid.tpa.settings: true
+      orchid.tpa.staff: true
+  orchid.roll:
+    description: Use /rolldice.
+    default: true
   orchid.roll:
     description: Use /rolldice.
     default: true
@@ -139,6 +193,9 @@ permissions:
     default: op
   orchid.restart:
     description: Use /srestart.
+    default: op
+  orchid.smp:
+    description: Use /smp SMP-launch countdown.
     default: op
   orchid.moderation.warn:
     description: Warn players.
@@ -172,4 +229,13 @@ permissions:
     default: op
   orchid.update:
     description: Check for and download new builds (/orchidplugins update [download]).
+    default: op
+  orchid.tpa.use:
+    description: Use TPA/TPAHERE requests, tptoggle, tpauto and friend commands.
+    default: true
+  orchid.tpa.settings:
+    description: Open the /tpsettings dialog.
+    default: true
+  orchid.tpa.staff:
+    description: Receive automatic TPTrap reports.
     default: op

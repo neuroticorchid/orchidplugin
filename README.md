@@ -1,6 +1,6 @@
 # OrchidPlugins
 
-An all-in-one [Paper](https://papermc.io) plugin (1.21.11, Java 21) that bundles the classic "small script" fun plugins into a single jar: player/dice rollers, chat-reaction giveaways, the death game, server announcements & restarts, random bounties — plus a full moderation suite and an admin-abuse command.
+An all-in-one [Paper](https://papermc.io) plugin (1.21.11, Java 21) that bundles the classic "small script" fun plugins into a single jar: player/dice rollers, chat-reaction giveaways, the death game, server announcements & restarts, SMP-season launch countdowns, random bounties — plus a full moderation suite and an admin-abuse command.
 
 Built by consolidating five Skript scripts into native Paper API code.
 
@@ -23,6 +23,7 @@ Built by consolidating five Skript scripts into native Paper API code.
   `/deathgame stop` or `/stopmoving stop` cancels the game (also clears any gay glow). Countdown, vote length, and glow distance are configurable.
 - **Announcements** — `/sannounce <message>`: full-screen title + action bar + sound to all players.
 - **Restart Countdown** — `/srestart [time|cancel]`: parse times like `1h`, `3m`, `45s`, `1h30m`, or raw seconds (default from config). Milestone countdown titles, then kicks everyone and dispatches `restart`.
+- **SMP Launch** — `/smp` season-start countdown. `/smp gather` shrinks the world border to a small radius around 0,0 and teleports everyone there (late joiners get moved too); `/smp start [seconds|now]` runs a full-screen countdown, then swells the border outward with a **GO** title; `/smp setborder [radius] [x] [z]` sets the border manually without teleporting.
 - **Bounties** — `/rollbounty` (alias `/bountyroll`): random player gets a configurable random bounty; killers claim it on death. `/checkbounty` to view. Payouts use **Vault** if available, otherwise an internal per-player balance.
 - **Moderation** —
   - `/warn <player> [duration] [reason]` – persistent warnings (optional expiry)
@@ -91,6 +92,7 @@ Data files are created in `plugins/OrchidPlugins/`:
 | `/vote die\|gay` | death game vote | — | everyone |
 | `/sannounce <message>` | full-screen announcement | `orchid.announce` | op |
 | `/srestart [time\|cancel]` | restart countdown | `orchid.restart` | op |
+| `/smp gather\|start [seconds\|now]\|setborder [radius] [x] [z]` | SMP season launch - gather at 0,0, count down, expand border | `orchid.smp` | op |
 | `/rollbounty` | place random bounty | — | everyone |
 | `/checkbounty [player]` | view bounty/balance | — | everyone |
 | `/warn <player> [duration] [reason]` | warn a player | `orchid.moderation.warn` | op |
@@ -125,6 +127,21 @@ poll:
 # /srestart default when no time is given
 restart:
   default-time: "60s"
+
+# /smp SMP-season launch countdown.
+# Gather everyone at the center, wait, then /smp start counts down and swells the border outward.
+smp:
+  world: "world"
+  center-x: 0
+  center-z: 0
+  # Small border radius around the center during the gather phase.
+  start-radius: 32
+  # Border radius the world expands to at launch.
+  end-radius: 10000
+  # Default countdown for /smp start when no seconds are given.
+  start-seconds: 30
+  # How long the border takes to swell (animate) at launch, in seconds.
+  swell-seconds: 5
 
 # Death game settings
 deathgame:
@@ -169,6 +186,7 @@ prefixes:
   abuse: "<light_purple>[ABUSE] "
   server: "<yellow><bold>[SERVER]</bold></yellow> "
   announce: "<gold>\uD83D\uDCE2 ANNOUNCEMENT"
+  smp: "<gold><bold>[SMP]</bold></gold> <yellow>"
 
 # SQLite audit database (plugins/OrchidPlugins/<filename>).
 # Stores every /adminabuse execution - executor, target, action, value, time.
