@@ -164,7 +164,7 @@ public final class OrchidPlugins extends JavaPlugin {
         SmpCommand smp = new SmpCommand(smpManager, configManager);
         getCommand("smp").setExecutor(smp);
         getCommand("smp").setTabCompleter(smp);
-        getCommand("rollbounty").setExecutor(new RollBountyCommand(this, bountyManager));
+        getCommand("randomb").setExecutor(new RollBountyCommand(this, bountyManager));
         getCommand("checkbounty").setExecutor(new CheckBountyCommand(bountyManager));
         getCommand("warn").setExecutor(new WarnCommand(moderationManager, configManager, webhookManager));
         getCommand("unwarn").setExecutor(new UnwarnCommand(moderationManager, configManager, webhookManager));

@@ -52,10 +52,9 @@ commands:
     description: SMP-season launch countdown - gather at 0,0, count down, expand the border.
     permission: orchid.smp
     usage: /smp <start [seconds|now]|gather|setborder [radius] [x] [z]>
-  rollbounty:
+  randomb:
     description: Randomly place a bounty on a player.
-    aliases: [bountyroll]
-    usage: /rollbounty
+    usage: /randomb
   warn:
     description: Warn a player with an optional duration and reason.
     permission: orchid.moderation.warn

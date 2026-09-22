@@ -24,7 +24,7 @@ Built by consolidating five Skript scripts into native Paper API code.
 - **Announcements** — `/sannounce <message>`: full-screen title + action bar + sound to all players.
 - **Restart Countdown** — `/srestart [time|cancel]`: parse times like `1h`, `3m`, `45s`, `1h30m`, or raw seconds (default from config). Milestone countdown titles, then kicks everyone and dispatches `restart`.
 - **SMP Launch** — `/smp` season-start countdown. `/smp gather` shrinks the world border to a small radius around 0,0 and teleports everyone there (late joiners get moved too); `/smp start [seconds|now]` runs a full-screen countdown, then swells the border outward with a **GO** title; `/smp setborder [radius] [x] [z]` sets the border manually without teleporting.
-- **Bounties** — `/rollbounty` (alias `/bountyroll`): random player gets a configurable random bounty; killers claim it on death. `/checkbounty` to view. Payouts use **Vault** if available, otherwise an internal per-player balance.
+- **Bounties** — `/randomb`: random player gets a configurable random bounty; killers claim it on death. `/checkbounty` to view. Payouts use **Vault** if available, otherwise an internal per-player balance.
 - **Moderation** —
   - `/warn <player> [duration] [reason]` – persistent warnings (optional expiry)
   - `/unwarn <player> [count] [reason]` – remove warnings, **offline players get a one-time message on their next join**
@@ -93,7 +93,7 @@ Data files are created in `plugins/OrchidPlugins/`:
 | `/sannounce <message>` | full-screen announcement | `orchid.announce` | op |
 | `/srestart [time\|cancel]` | restart countdown | `orchid.restart` | op |
 | `/smp gather\|start [seconds\|now]\|setborder [radius] [x] [z]` | SMP season launch - gather at 0,0, count down, expand border | `orchid.smp` | op |
-| `/rollbounty` | place random bounty | — | everyone |
+| `/randomb` | place random bounty | — | everyone |
 | `/checkbounty [player]` | view bounty/balance | — | everyone |
 | `/warn <player> [duration] [reason]` | warn a player | `orchid.moderation.warn` | op |
 | `/unwarn <player> [count] [reason]` | remove warnings | `orchid.moderation.unwarn` | op |
@@ -151,7 +151,7 @@ deathgame:
   # Keeps victims' bases hidden from far-away raiders.
   glow-distance: 24
 
-# /rollbounty amounts
+# /randomb amounts
 bounty:
   min-amount: 500
   max-amount: 5000

@@ -28,7 +28,7 @@ deathgame:
   # Keeps victims' bases hidden from far-away raiders.
   glow-distance: 24
 
-# /rollbounty amounts
+# /randomb amounts
 bounty:
   min-amount: 500
   max-amount: 5000
