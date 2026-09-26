@@ -1,21 +1,12 @@
-name: Build & Release
+name: Build
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      promote_stable:
-        description: "Also publish the stable channel as a full release"
-        type: boolean
-        required: false
-        default: false
-
-permissions:
-  contents: write
 
 jobs:
-  build-and-release:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -57,50 +48,3 @@ jobs:
           name: OrchidPlugins-jars-${{ steps.version.outputs.base }}
           path: dist/*.jar
           if-no-files-found: error
-
-      - name: Publish neuro pre-release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          VER="${{ steps.version.outputs.neuro }}"
-          TAG="v${VER}"
-          gh release delete "$TAG" --yes --cleanup-tag || true
-          cat > notes.md <<EOF
-          Auto-built from \`main\` (commit \`${{ github.sha }}\`).
-
-          This is the **neuro (testing) channel** pre-release. Latest features for play-testing.
-
-          ## Files
-          - \`OrchidPlugins-${VER}.jar\`
-
-          ## Install
-          1. Stop the server (no jar hot-swapping, no \`/reload\`).
-          2. Drop the jar into \`plugins/\`.
-          3. Start. Run \`/orchidplugins update\` on a -neuro build to check for newer neuro builds here.
-          EOF
-          gh release create "$TAG" \
-            --title "OrchidPlugins ${VER} · pre-release" \
-            --prerelease \
-            --notes-file notes.md \
-            "dist/OrchidPlugins-${VER}.jar"
-
-      - name: Publish stable release
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.promote_stable }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          VER="${{ steps.version.outputs.stable }}"
-          TAG="v${VER}"
-          gh release delete "$TAG" --yes --cleanup-tag || true
-          cat > notes.md <<EOF
-          Promoted from \`main\` (commit \`${{ github.sha }}\`).
-
-          This is the **stable channel** release — the verified production build.
-
-          ## Files
-          - \`OrchidPlugins-${VER}.jar\`
-          EOF
-          gh release create "$TAG" \
-            --title "OrchidPlugins ${VER}" \
-            --notes-file notes.md \
-            "dist/OrchidPlugins-${VER}.jar"

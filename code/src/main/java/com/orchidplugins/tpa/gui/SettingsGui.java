@@ -36,7 +36,7 @@ public class SettingsGui {
     }
 
     public void open(Player player) {
-        player.showDialog(hubDialog(player));
+        openPicker(player);
     }
 
     /** Opens straight to the per-player edit dialog for the given target. */
@@ -53,83 +53,6 @@ public class SettingsGui {
 
     private Component mm(String mini) {
         return mm.deserialize(mini);
-    }
-
-    // ---------- Hub ----------
-
-    private Dialog hubDialog(Player player) {
-        TpaManager.PlayerSettings settings = tpaManager.get(player.getUniqueId());
-        boolean globalTpa = tpaManager.isGlobalOn(Request.Type.TPA);
-        boolean globalTpaHere = tpaManager.isGlobalOn(Request.Type.TPAHERE);
-
-        java.util.Map<String, String> colors = new java.util.HashMap<>();
-        colors.put("purple", PURPLE);
-
-        List<ActionButton> buttons = new ArrayList<>();
-        buttons.add(ActionButton.create(
-                mm("<green><b>✔ Save</b></green>"), mm("<gray>Apply the toggles above.</gray>"), 60,
-                DialogAction.customClick((view, audience) -> {
-                    if (!(audience instanceof Player target)) {
-                        return;
-                    }
-                    Boolean globalTpaVal = view.getBoolean("global_tpa");
-                    Boolean globalTpaHereVal = view.getBoolean("global_tpahere");
-                    Boolean autoTpa = view.getBoolean("auto_tpa");
-                    Boolean autoTpaHere = view.getBoolean("auto_tpahere");
-                    TpaManager.PlayerSettings current = tpaManager.get(target.getUniqueId());
-                    if (globalTpaVal != null) {
-                        tpaManager.setGlobal(Request.Type.TPA, globalTpaVal);
-                    }
-                    if (globalTpaHereVal != null) {
-                        tpaManager.setGlobal(Request.Type.TPAHERE, globalTpaHereVal);
-                    }
-                    if (autoTpa != null) {
-                        current.setAutoTpa(autoTpa);
-                    }
-                    if (autoTpaHere != null) {
-                        current.setAutoTpaHere(autoTpaHere);
-                    }
-                    TpaMsg.send(config, target, "<green>TP settings saved.");
-                    open(target);
-                }, callbackOptions())));
-        buttons.add(ActionButton.create(
-                mm("<b><color:#A855F7>[ ✎ Edit a player… ]</color></b>"),
-                mm("<gray>Pick someone to change their TPA/TPAHERE permission with you.</gray>"), 90,
-                DialogAction.customClick((view, audience) -> {
-                    if (audience instanceof Player target) {
-                        openPicker(target);
-                    }
-                }, callbackOptions())));
-
-        return Dialog.create(builder -> builder.empty()
-                .base(DialogBase.builder(mm("<b>" + PURPLE + "TPA SETTINGS</b>"))
-                        .inputs(List.of(
-                                DialogInput.bool("global_tpa", mm("Accept Incoming TPA (Global)"))
-                                        .initial(globalTpa)
-                                        .onTrue("✔ ON")
-                                        .onFalse("✖ OFF")
-                                        .build(),
-                                DialogInput.bool("global_tpahere", mm("Accept Incoming TPAHERE (Global)"))
-                                        .initial(globalTpaHere)
-                                        .onTrue("✔ ON")
-                                        .onFalse("✖ OFF")
-                                        .build(),
-                                DialogInput.bool("auto_tpa", mm("Auto-accept TPA"))
-                                        .initial(settings.isAutoTpa())
-                                        .onTrue("✔ ON")
-                                        .onFalse("✖ OFF")
-                                        .build(),
-                                DialogInput.bool("auto_tpahere", mm("Auto-accept TPAHERE"))
-                                        .initial(settings.isAutoTpaHere())
-                                        .onTrue("✔ ON")
-                                        .onFalse("✖ OFF")
-                                        .build()))
-                        .build())
-                .type(DialogType.multiAction(buttons)
-                        .exitAction(ActionButton.create(mm("<dark_gray>Close</dark_gray>"),
-                                mm("<gray>Close this menu.</gray>"), 40, null))
-                        .columns(1)
-                        .build()));
     }
 
     // ---------- Player picker (offline textbox on top, online grid below) ----------
@@ -186,7 +109,6 @@ public class SettingsGui {
                                 .build()))
                         .build())
                 .type(DialogType.multiAction(buttons)
-                        .exitAction(backButton(player))
                         .columns(6)
                         .build()));
     }
@@ -198,7 +120,7 @@ public class SettingsGui {
     }
 
     private Dialog editDialog(Player owner, UUID other, String name) {
-        TpaManager.PlayerSettings settings = tpaManager.get(owner.getUniqueId());
+        TpaManager.PlayerSettings settings = tpaManager.get(other);
         boolean tpa = settings.getTpa() != null ? settings.getTpa() : tpaManager.isGlobalOn(Request.Type.TPA);
         boolean tpahere = settings.getTpaHere() != null ? settings.getTpaHere() : tpaManager.isGlobalOn(Request.Type.TPAHERE);
         boolean isFriend = tpaManager.isFriend(owner.getUniqueId(), other);
@@ -212,14 +134,14 @@ public class SettingsGui {
                     }
                     Boolean tpaVal = view.getBoolean("tpa_with");
                     Boolean tpahereVal = view.getBoolean("tpahere_with");
-                    TpaManager.PlayerSettings current = tpaManager.get(target.getUniqueId());
+                    TpaManager.PlayerSettings current = tpaManager.get(other);
                     if (tpaVal != null) {
                         current.setTpa(tpaVal);
                     }
                     if (tpahereVal != null) {
                         current.setTpaHere(tpahereVal);
                     }
-                    TpaMsg.send(config, target, "<green>Updated settings with <yellow>" + name + "<green>.");
+                    TpaMsg.send(config, target, "<green>Updated settings for <yellow>" + name + "<green>.");
                     openPicker(target);
                 }, callbackOptions())));
         buttons.add(ActionButton.create(
@@ -244,12 +166,12 @@ public class SettingsGui {
         return Dialog.create(builder -> builder.empty()
                 .base(DialogBase.builder(mm("<b>" + PURPLE + "EDIT PLAYER: " + name + "</b>"))
                         .inputs(List.of(
-                                DialogInput.bool("tpa_with", mm("TPA with " + name))
+                                DialogInput.bool("tpa_with", mm("TPA"))
                                         .initial(tpa)
                                         .onTrue("✔ ON")
                                         .onFalse("✖ OFF")
                                         .build(),
-                                DialogInput.bool("tpahere_with", mm("TPAHERE with " + name))
+                                DialogInput.bool("tpahere_with", mm("TPAHERE"))
                                         .initial(tpahere)
                                         .onTrue("✔ ON")
                                         .onFalse("✖ OFF")
@@ -259,15 +181,6 @@ public class SettingsGui {
                         .exitAction(pickerBackButton(owner))
                         .columns(1)
                         .build()));
-    }
-
-    private ActionButton backButton(Player player) {
-        return ActionButton.create(mm("<gray>▴ Back</gray>"), mm("<gray>Back.</gray>"), 50,
-                DialogAction.customClick((view, audience) -> {
-                    if (audience instanceof Player target) {
-                        open(target);
-                    }
-                }, callbackOptions()));
     }
 
     private ActionButton pickerBackButton(Player player) {

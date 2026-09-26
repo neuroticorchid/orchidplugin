@@ -114,9 +114,9 @@ commands:
     permission: orchid.tpa.use
     usage: /tpadeny [player]
   tptoggle:
-    description: Toggle TPA/TPAHERE on or off globally or for a player.
+    description: Toggle TPA/TPAHERE on or off for everyone or a specific player.
     permission: orchid.tpa.use
-    usage: /tptoggle <all|player> <on|off> [all|tpa|tpahere]
+    usage: /tptoggle <global|player> <on|off>
   tpauto:
     description: Toggle auto-accepting TPA requests.
     permission: orchid.tpa.use
@@ -161,14 +161,12 @@ permissions:
       orchid.adminabuse: true
       orchid.adminabuse.log: true
       orchid.discord.test: true
+      orchid.license: true
       orchid.reload: true
       orchid.update: true
       orchid.tpa.use: true
       orchid.tpa.settings: true
       orchid.tpa.staff: true
-  orchid.roll:
-    description: Use /rolldice.
-    default: true
   orchid.roll:
     description: Use /rolldice.
     default: true
@@ -222,6 +220,9 @@ permissions:
     default: op
   orchid.discord.test:
     description: Send a test Discord webhook (/orchidplugins webhook-test).
+    default: op
+  orchid.license:
+    description: Activate OrchidPlugins with a license key.
     default: op
   orchid.reload:
     description: Reload the plugin config (/orchidplugins reload).

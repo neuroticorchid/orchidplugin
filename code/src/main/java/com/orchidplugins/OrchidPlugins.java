@@ -42,6 +42,7 @@ import com.orchidplugins.managers.BountyManager;
 import com.orchidplugins.managers.ConfigManager;
 import com.orchidplugins.managers.DeathGameManager;
 import com.orchidplugins.managers.GiveawayManager;
+import com.orchidplugins.managers.LicenseManager;
 import com.orchidplugins.managers.ModerationManager;
 import com.orchidplugins.managers.PollManager;
 import com.orchidplugins.managers.RestartManager;
@@ -57,6 +58,7 @@ import com.orchidplugins.tpa.TrapReportManager;
 import com.orchidplugins.tpa.gui.ChestSettingsGui;
 import com.orchidplugins.tpa.gui.SettingsGui;
 import com.orchidplugins.util.Msg;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -77,6 +79,7 @@ public final class OrchidPlugins extends JavaPlugin {
     private WebhookManager webhookManager;
     private PollManager pollManager;
     private UpdateManager updateManager;
+    private LicenseManager licenseManager;
     private TpaManager tpaManager;
     private RequestManager tpaRequests;
     private FriendManager friendManager;
@@ -91,6 +94,7 @@ public final class OrchidPlugins extends JavaPlugin {
 
         this.configManager = new ConfigManager(this);
         this.database = new SqliteDatabase(this, configManager.databaseFilename());
+        this.licenseManager = new LicenseManager(this);
         this.webhookManager = new WebhookManager(this, configManager.getRaw());
         this.updateManager = new UpdateManager(this, configManager);
         this.attributeManager = new AttributeManager();
@@ -126,6 +130,16 @@ public final class OrchidPlugins extends JavaPlugin {
                                         + com.orchidplugins.tpa.TpaUtil.nameOf(target)
                                         + " <red>expired.")),
                 100L, 100L);
+        getServer().getScheduler().runTaskTimer(this,
+                licenseManager::reload, 1200L, 1200L);
+
+        if (!licenseManager.isLicensed()) {
+            getLogger().warning("==========================================================");
+            getLogger().warning("OrchidPlugins is NOT LICENSED - all commands are blocked.");
+            getLogger().warning("Activate with: /orchidplugins license <key>");
+            getLogger().warning("or place your key in plugins/OrchidPlugins/license.key");
+            getLogger().warning("==========================================================");
+        }
 
         getLogger().info("OrchidPlugins enabled.");
     }
@@ -151,65 +165,75 @@ public final class OrchidPlugins extends JavaPlugin {
     }
 
     private void registerCommands() {
-        getCommand("rolldice").setExecutor(new RollDiceCommand(this));
-        getCommand("react").setExecutor(new ReactCommand(giveawayManager));
-        getCommand("endreact").setExecutor(new EndReactCommand(giveawayManager));
-        getCommand("poll").setExecutor(new PollCommand(pollManager, configManager));
-        getCommand("endpoll").setExecutor(new EndPollCommand(pollManager));
-        getCommand("deathgame").setExecutor(new DeathGameCommand(deathGameManager));
-        getCommand("stopmoving").setExecutor(new StopMovingCommand(deathGameManager));
-        getCommand("vote").setExecutor(new VoteCommand(deathGameManager));
-        getCommand("sannounce").setExecutor(new AnnounceCommand());
-        getCommand("srestart").setExecutor(new RestartCommand(restartManager, configManager));
+        getCommand("rolldice").setExecutor(gate(new RollDiceCommand(this)));
+        getCommand("react").setExecutor(gate(new ReactCommand(giveawayManager)));
+        getCommand("endreact").setExecutor(gate(new EndReactCommand(giveawayManager)));
+        getCommand("poll").setExecutor(gate(new PollCommand(pollManager, configManager)));
+        getCommand("endpoll").setExecutor(gate(new EndPollCommand(pollManager)));
+        getCommand("deathgame").setExecutor(gate(new DeathGameCommand(deathGameManager)));
+        getCommand("stopmoving").setExecutor(gate(new StopMovingCommand(deathGameManager)));
+        getCommand("vote").setExecutor(gate(new VoteCommand(deathGameManager)));
+        getCommand("sannounce").setExecutor(gate(new AnnounceCommand()));
+        getCommand("srestart").setExecutor(gate(new RestartCommand(restartManager, configManager)));
         SmpCommand smp = new SmpCommand(smpManager, configManager);
-        getCommand("smp").setExecutor(smp);
+        getCommand("smp").setExecutor(gate(smp));
         getCommand("smp").setTabCompleter(smp);
-        getCommand("randomb").setExecutor(new RollBountyCommand(this, bountyManager));
-        getCommand("checkbounty").setExecutor(new CheckBountyCommand(bountyManager));
-        getCommand("warn").setExecutor(new WarnCommand(moderationManager, configManager, webhookManager));
-        getCommand("unwarn").setExecutor(new UnwarnCommand(moderationManager, configManager, webhookManager));
-        getCommand("ban").setExecutor(new BanCommand(moderationManager, configManager, webhookManager));
-        getCommand("banip").setExecutor(new BanIpCommand(moderationManager, configManager, webhookManager));
-        getCommand("unban").setExecutor(new UnbanCommand(moderationManager, configManager, webhookManager));
-        getCommand("suspendstaff").setExecutor(new SuspendStaffCommand(this));
-        getCommand("unsuspendstaff").setExecutor(new SuspendStaffCommand(this));
-        OrchidPluginsCommand orchid = new OrchidPluginsCommand(this, configManager, database, webhookManager, updateManager);
+        getCommand("randomb").setExecutor(gate(new RollBountyCommand(this, bountyManager)));
+        getCommand("checkbounty").setExecutor(gate(new CheckBountyCommand(bountyManager)));
+        getCommand("warn").setExecutor(gate(new WarnCommand(moderationManager, configManager, webhookManager)));
+        getCommand("unwarn").setExecutor(gate(new UnwarnCommand(moderationManager, configManager, webhookManager)));
+        getCommand("ban").setExecutor(gate(new BanCommand(moderationManager, configManager, webhookManager)));
+        getCommand("banip").setExecutor(gate(new BanIpCommand(moderationManager, configManager, webhookManager)));
+        getCommand("unban").setExecutor(gate(new UnbanCommand(moderationManager, configManager, webhookManager)));
+        getCommand("suspendstaff").setExecutor(gate(new SuspendStaffCommand(this)));
+        getCommand("unsuspendstaff").setExecutor(gate(new SuspendStaffCommand(this)));
+        OrchidPluginsCommand orchid = new OrchidPluginsCommand(this, configManager, database, webhookManager, updateManager, licenseManager);
         getCommand("orchidplugins").setExecutor(orchid);
         getCommand("orchidplugins").setTabCompleter(orchid);
         AdminAbuseCommand adminAbuse = new AdminAbuseCommand(attributeManager, configManager, this, database, webhookManager);
-        getCommand("adminabuse").setExecutor(adminAbuse);
+        getCommand("adminabuse").setExecutor(gate(adminAbuse));
         getCommand("adminabuse").setTabCompleter(adminAbuse);
         TeleportService teleportService = new TeleportService(this, configManager, trapReport);
         TpaCommand tpa = new TpaCommand(configManager, tpaRequests, tpaManager, teleportService);
         TpaHereCommand tpaHere = new TpaHereCommand(configManager, tpaRequests, tpaManager, teleportService);
-        getCommand("tpa").setExecutor(tpa);
+        getCommand("tpa").setExecutor(gate(tpa));
         getCommand("tpa").setTabCompleter(tpa);
-        getCommand("tpahere").setExecutor(tpaHere);
+        getCommand("tpahere").setExecutor(gate(tpaHere));
         getCommand("tpahere").setTabCompleter(tpaHere);
         TpaAcceptCommand tpaAccept = new TpaAcceptCommand(configManager, tpaRequests, teleportService);
-        getCommand("tpaaccept").setExecutor(tpaAccept);
+        getCommand("tpaaccept").setExecutor(gate(tpaAccept));
         getCommand("tpaaccept").setTabCompleter(tpaAccept);
         TpaDenyCommand tpaDeny = new TpaDenyCommand(configManager, tpaRequests);
-        getCommand("tpadeny").setExecutor(tpaDeny);
+        getCommand("tpadeny").setExecutor(gate(tpaDeny));
         getCommand("tpadeny").setTabCompleter(tpaDeny);
         TpToggleCommand tpToggle = new TpToggleCommand(configManager, tpaManager);
-        getCommand("tptoggle").setExecutor(tpToggle);
+        getCommand("tptoggle").setExecutor(gate(tpToggle));
         getCommand("tptoggle").setTabCompleter(tpToggle);
         TpAutoCommand tpAuto = new TpAutoCommand(configManager, tpaManager);
-        getCommand("tpauto").setExecutor(tpAuto);
+        getCommand("tpauto").setExecutor(gate(tpAuto));
         getCommand("tpauto").setTabCompleter(tpAuto);
         TpSettingsCommand tpSettings = new TpSettingsCommand(configManager, settingsGui, chestSettingsGui);
-        getCommand("tpsettings").setExecutor(tpSettings);
+        getCommand("tpsettings").setExecutor(gate(tpSettings));
         getCommand("tpsettings").setTabCompleter(tpSettings);
         FriendCommand friend = new FriendCommand(configManager, tpaManager, friendManager);
-        getCommand("friend").setExecutor(friend);
+        getCommand("friend").setExecutor(gate(friend));
         getCommand("friend").setTabCompleter(friend);
         FAcceptCommand faccept = new FAcceptCommand(configManager, tpaManager, friendManager);
-        getCommand("faccept").setExecutor(faccept);
+        getCommand("faccept").setExecutor(gate(faccept));
         getCommand("faccept").setTabCompleter(faccept);
         FDenyCommand fdeny = new FDenyCommand(configManager, friendManager);
-        getCommand("fdeny").setExecutor(fdeny);
+        getCommand("fdeny").setExecutor(gate(fdeny));
         getCommand("fdeny").setTabCompleter(fdeny);
+    }
+
+    private CommandExecutor gate(CommandExecutor executor) {
+        return (sender, command, label, args) -> {
+            if (!licenseManager.isLicensed()) {
+                Msg.send(sender, licenseManager.unlicensedMessage());
+                return true;
+            }
+            return executor.onCommand(sender, command, label, args);
+        };
     }
 
     private void registerListeners() {
@@ -290,6 +314,10 @@ public final class OrchidPlugins extends JavaPlugin {
 
     public UpdateManager getUpdateManager() {
         return updateManager;
+    }
+
+    public LicenseManager getLicenseManager() {
+        return licenseManager;
     }
 
     public AttributeManager getAttributeManager() {

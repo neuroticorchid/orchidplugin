@@ -47,7 +47,7 @@ Built by consolidating five Skript scripts into native Paper API code.
   Usage: `/aa <subcommand> [player] [value] [-b|-s]` — target defaults to the sender.
 
 - **Discord Webhooks** — optional webhook notifications for moderation, bounties, and admin abuse. **Each event has its own URL** (e.g. different channels) and toggle, plus a shared `default-url`. Posts are sent off the main thread via the JDK HTTP client (no extra deps).
-- **Plugin Info** — `/orchidplugins help` (`/orchidp`, `/orchid`) lists every command, `/orchidplugins abuselog [player] [limit]` browses the `/aa` audit DB, `/orchidplugins webhook-test` sends a sample embed, `/orchidplugins version` shows the installed version.
+- **Plugin Info** — `/orchidplugins help` (`/orchidp`, `/orchid`) lists every command, `/orchidplugins abuselog [player] [limit]` browses the `/aa` audit DB, `/orchidplugins webhook-test` sends a sample embed, `/orchidplugins license <key>` activates the plugin, `/orchidplugins version` shows the installed version.
 
 ---
 
@@ -65,13 +65,17 @@ Optional (feature toggles automatically at runtime):
 
 ## Installation
 
-1. Grab the channel jar you want (`OrchidPlugins-<ver>-stable.jar` for production, `-neuro.jar` for testing) from `output/` or [Releases](releases).
+1. Grab the channel jar you want (`OrchidPlugins-<ver>-stable.jar` for production, `-neuro.jar` for testing) from `output/`. Jars are distributed directly to licensed buyers — there are no public downloads.
 2. Drop it into your server's `plugins/` folder.
-3. Restart (or reload) the server.
+3. Restart the server (no jar hot-swapping, no `/reload`).
+4. Activate the plugin with the license key you received: run `/orchidplugins license <key>` in the console, or place the key in a file at `plugins/OrchidPlugins/license.key`.
+
+> **Licensing** — OrchidPlugins is commercial software (see [LICENSE](LICENSE)). Without a valid license key all plugin commands are blocked. Each key is verified offline against a signed key; keys may include an expiry date.
 
 Data files are created in `plugins/OrchidPlugins/`:
 
 - `config.yml` — settings and message prefixes (see Configuration below)
+- `license.key` — your license key (activated via `/orchidplugins license <key>`)
 - `data.db` — SQLite audit database of `/adminabuse` executions
 - `moderation-data.json` — warnings (with expiry), queued offline unwarn messages, and last-known IPs (used for `/banip`)
 - `suspensions.json` — saved staff groups while suspended
@@ -105,6 +109,7 @@ Data files are created in `plugins/OrchidPlugins/`:
 | `/adminabuse <sub> [player] [value] [-b\|-s]` (`/aa`) | attribute abuse commands | `orchid.adminabuse` | op |
 | `/orchidplugins abuselog [player] [limit]` (`/orchidp`, `/orchid`) | browse the /aa audit DB | `orchid.adminabuse.log` | op |
 | `/orchidplugins webhook-test` | send a test Discord embed | `orchid.discord.test` | op |
+| `/orchidplugins license <key>` | activate the plugin with your license key | `orchid.license` | op |
 | `/orchidplugins help\|version` (`/orchidp`, `/orchid`) | plugin info | — | everyone |
 
 There is also an `orchid.*` wildcard permission that grants everything.
@@ -259,4 +264,4 @@ The shade plugin bundles and relocates Gson (`com.orchidplugins.lib.gson`) and b
 
 ## License
 
-Released under the [MIT License](LICENSE). Feel free to use, modify, and distribute — attribution is appreciated but not required.
+Commercial software — see [LICENSE](LICENSE). OrchidPlugins is closed-source proprietary software; a purchased license key is required to use it. Redistribution, reselling, or sharing of the plugin or your license key is prohibited. Keys are verified locally against a signed key, so no phone-home is required.

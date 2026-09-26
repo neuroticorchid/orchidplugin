@@ -5,19 +5,20 @@ import com.orchidplugins.managers.TpaManager;
 import com.orchidplugins.tpa.Request;
 import com.orchidplugins.tpa.TpaMsg;
 import com.orchidplugins.tpa.TpaUtil;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 public class TpToggleCommand implements CommandExecutor, TabCompleter {
 
-    private static final String[] TYPES = {"all", "tpa", "tpahere"};
+    private static final String GLOBAL = "global";
 
     private final ConfigManager config;
     private final TpaManager tpaManager;
@@ -29,84 +30,62 @@ public class TpToggleCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (args.length < 2 || args.length > 3) {
-            TpaMsg.send(config, sender, "<red>Usage: /tptoggle <all|player> <on|off> [all|tpa|tpahere]");
+        if (args.length != 2) {
+            TpaMsg.send(config, sender, "<red>Usage: /tptoggle <global|player> <on|off>");
             return true;
         }
-        String who = args[0];
-        boolean on = parseOnOff(args[1]);
-        Request.Type typeOrAll = parseType(args.length > 2 ? args[2] : "all");
-
-        UUID playerId = null;
-        if (!who.equalsIgnoreCase("all")) {
-            playerId = TpaUtil.resolve(who);
-            if (playerId == null) {
-                TpaMsg.send(config, sender, "<red>Player <yellow>" + who + " <red>not found.");
-                return true;
-            }
+        boolean on;
+        if (args[1].equalsIgnoreCase("on")) {
+            on = true;
+        } else if (args[1].equalsIgnoreCase("off")) {
+            on = false;
+        } else {
+            TpaMsg.send(config, sender, "<red>Usage: /tptoggle <global|player> <on|off>");
+            return true;
         }
 
+        if (args[0].equalsIgnoreCase(GLOBAL)) {
+            tpaManager.setGlobal(Request.Type.TPA, on);
+            tpaManager.setGlobal(Request.Type.TPAHERE, on);
+            TpaMsg.send(config, sender, "<green>TPA and TPAHERE are now <bold>" + (on ? "<green>ON" : "<red>OFF")
+                    + "</bold> <green>for <yellow>everyone<green>.");
+            return true;
+        }
+
+        UUID playerId = TpaUtil.resolve(args[0]);
         if (playerId == null) {
-            if (typeOrAll == null) {
-                tpaManager.setGlobal(Request.Type.TPA, on);
-                tpaManager.setGlobal(Request.Type.TPAHERE, on);
-                msg(sender, "TPA and TPAHERE", who, on, null);
-            } else {
-                tpaManager.setGlobal(typeOrAll, on);
-                msg(sender, typeName(typeOrAll), who, on, null);
-            }
-        } else {
-            TpaManager.PlayerSettings settings = tpaManager.get(playerId);
-            if (typeOrAll == null || typeOrAll == Request.Type.TPA) {
-                settings.setTpa(on);
-            }
-            if (typeOrAll == null || typeOrAll == Request.Type.TPAHERE) {
-                settings.setTpaHere(on);
-            }
-            msg(sender, typeOrAll == null ? "TPA and TPAHERE" : typeName(typeOrAll), who, on, playerId);
+            TpaMsg.send(config, sender, "<red>Player <yellow>" + args[0] + " <red>not found.");
+            return true;
+        }
+        TpaManager.PlayerSettings settings = tpaManager.get(playerId);
+        settings.setTpa(on);
+        settings.setTpaHere(on);
+
+        String name = TpaUtil.nameOf(playerId);
+        TpaMsg.send(config, sender, "<green>TPA and TPAHERE are now <bold>" + (on ? "<green>ON" : "<red>OFF")
+                + "</bold> <green>for <yellow>" + name + "<green>.");
+        if (sender instanceof Player p && p.getUniqueId().equals(playerId)) {
+            return true;
+        }
+        Player target = Bukkit.getPlayer(playerId);
+        if (target != null) {
+            TpaMsg.send(config, target, "<yellow>" + sender.getName()
+                    + " <green>changed your TPA/TPAHERE toggle to <bold>"
+                    + (on ? "<green>ON" : "<red>OFF") + "</bold><green>.");
         }
         return true;
-    }
-
-    private void msg(CommandSender sender, String typeLabel, String who, boolean on, UUID playerId) {
-        String name = playerId == null ? who : TpaUtil.nameOf(playerId);
-        TpaMsg.send(config, sender, "<green>" + typeLabel + " is now <bold>" + (on ? "<green>ON" : "<red>OFF")
-                + "</bold> <green>for <yellow>" + name + "<green>.");
-        if (playerId != null && !(sender instanceof Player p && p.getUniqueId().equals(playerId))) {
-            Player target = org.bukkit.Bukkit.getPlayer(playerId);
-            if (target != null) {
-                TpaMsg.send(config, target, "<yellow>" + sender.getName()
-                        + " <green>changed your " + typeLabel + " toggle to <bold>"
-                        + (on ? "<green>ON" : "<red>OFF") + "</bold><green>.");
-            }
-        }
-    }
-
-    private static boolean parseOnOff(String s) {
-        return s.equalsIgnoreCase("on");
-    }
-
-    private static String typeName(Request.Type type) {
-        return type == Request.Type.TPA ? "TPA" : "TPAHERE";
-    }
-
-    private static Request.Type parseType(String s) {
-        return switch (s.toLowerCase(Locale.ROOT)) {
-            case "tpa" -> Request.Type.TPA;
-            case "tpahere" -> Request.Type.TPAHERE;
-            default -> null;
-        };
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> out = new java.util.ArrayList<>();
-            if ("all".startsWith(args[0].toLowerCase())) {
-                out.add("all");
+            List<String> out = new ArrayList<>();
+            if (GLOBAL.startsWith(args[0].toLowerCase())) {
+                out.add(GLOBAL);
             }
             for (Player online : sender.getServer().getOnlinePlayers()) {
-                if (online.getName().toLowerCase().startsWith(args[0].toLowerCase())) {
+                if (online.getName().toLowerCase().startsWith(args[0].toLowerCase())
+                        && !online.getUniqueId().equals(sender instanceof Player p ? p.getUniqueId() : null)) {
                     out.add(online.getName());
                 }
             }
@@ -114,11 +93,6 @@ public class TpToggleCommand implements CommandExecutor, TabCompleter {
         }
         if (args.length == 2) {
             return List.of("on", "off");
-        }
-        if (args.length == 3) {
-            return java.util.Arrays.stream(TYPES)
-                    .filter(t -> t.toLowerCase().startsWith(args[2].toLowerCase()))
-                    .toList();
         }
         return List.of();
     }

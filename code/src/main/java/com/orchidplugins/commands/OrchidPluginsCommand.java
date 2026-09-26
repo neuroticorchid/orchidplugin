@@ -2,6 +2,7 @@ package com.orchidplugins.commands;
 
 import com.orchidplugins.db.SqliteDatabase;
 import com.orchidplugins.managers.ConfigManager;
+import com.orchidplugins.managers.LicenseManager;
 import com.orchidplugins.managers.UpdateManager;
 import com.orchidplugins.managers.WebhookManager;
 import com.orchidplugins.util.Msg;
@@ -20,28 +21,41 @@ import java.util.Locale;
 public final class OrchidPluginsCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBCOMMANDS = Arrays.asList(
-            "help", "version", "abuselog", "webhook-test", "reload", "update");
+            "help", "version", "license", "abuselog", "webhook-test", "reload", "update");
+
+    private static final List<String> UNLICENSED_SUBCOMMANDS = Arrays.asList(
+            "help", "version", "v", "license", "key");
 
     private final Plugin plugin;
     private final ConfigManager configManager;
     private final SqliteDatabase database;
     private final WebhookManager webhook;
     private final UpdateManager updateManager;
+    private final LicenseManager licenseManager;
 
     public OrchidPluginsCommand(Plugin plugin, ConfigManager configManager, SqliteDatabase database,
-                                WebhookManager webhook, UpdateManager updateManager) {
+                                WebhookManager webhook, UpdateManager updateManager,
+                                LicenseManager licenseManager) {
         this.plugin = plugin;
         this.configManager = configManager;
         this.database = database;
         this.webhook = webhook;
         this.updateManager = updateManager;
+        this.licenseManager = licenseManager;
     }
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
         String sub = args.length == 0 ? "help" : args[0].toLowerCase(Locale.ROOT);
+        if (!licenseManager.isLicensed() && !UNLICENSED_SUBCOMMANDS.contains(sub)) {
+            Msg.send(sender, licenseManager.unlicensedMessage());
+            return true;
+        }
         switch (sub) {
+            case "license":
+            case "key":
+                return handleLicense(sender, args);
             case "version":
             case "v":
                 Msg.send(sender, "<gold><bold>OrchidPlugins</bold></gold> <gray>v" + plugin.getPluginMeta().getVersion());
@@ -83,6 +97,46 @@ public final class OrchidPluginsCommand implements CommandExecutor, TabCompleter
                 sendHelp(sender);
                 return true;
         }
+    }
+
+    private boolean handleLicense(CommandSender sender, String[] args) {
+        if (sender instanceof org.bukkit.entity.Player && !sender.hasPermission("orchid.license")) {
+            Msg.send(sender, "<red>You don't have permission to use this command.");
+            return true;
+        }
+        if (args.length >= 2) {
+            if (licenseManager.activate(args[1])) {
+                Msg.send(sender, "<green>License key accepted - OrchidPlugins is now licensed.");
+            } else {
+                Msg.send(sender, "<red>Invalid license key - the signature check failed.");
+                Msg.send(sender, "<gray>Check the key with the seller, or for keys with an expiry that it hasn't expired.");
+            }
+            return true;
+        }
+        switch (licenseManager.getState()) {
+            case LICENSED:
+                Msg.send(sender, "<green>OrchidPlugins is licensed"
+                        + (licenseManager.getLicenseId() == null || licenseManager.getLicenseId().isEmpty()
+                                ? "" : " for <white>" + licenseManager.getLicenseId())
+                        + (licenseManager.getExpiresAt() > 0
+                                ? " <gray>- expires <yellow>"
+                                        + java.time.Instant.ofEpochSecond(licenseManager.getExpiresAt())
+                                        .atZone(java.time.ZoneId.systemDefault()).toLocalDate() + "<reset>"
+                                : "."));
+                break;
+            case NOT_PROVIDED:
+                Msg.send(sender, "<red>No license key is set.");
+                break;
+            case INVALID:
+                Msg.send(sender, "<red>The license key is invalid.");
+                break;
+            case EXPIRED:
+                Msg.send(sender, "<red>The license key has expired.");
+                break;
+        }
+        Msg.send(sender, "<gray>To activate, run: <yellow>/orchidplugins license <key>");
+        Msg.send(sender, "<gray>or place the key in <white>plugins/OrchidPlugins/license.key");
+        return true;
     }
 
     private boolean handleAbuseLog(CommandSender sender, String[] args) {
@@ -162,6 +216,7 @@ public final class OrchidPluginsCommand implements CommandExecutor, TabCompleter
         Msg.send(sender, "<yellow>/orchidplugins webhook-test <gray>- send a test Discord embed");
         Msg.send(sender, "<yellow>/orchidplugins reload <gray>- reload config.yml without restart");
         Msg.send(sender, "<yellow>/orchidplugins update [download] <gray>- check GitHub for a newer <aqua>" + updateManager.channel() + " <gray>build");
+        Msg.send(sender, "<yellow>/orchidplugins license <key> <gray>- activate with your license key");
         Msg.send(sender, "<yellow>/orchidplugins version <gray>- plugin info");
         Msg.send(sender, "<green>----------------");
     }

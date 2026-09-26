@@ -1,1 +1,4 @@
 output/
+
+# License signing secret (NEVER commit)
+tools/keys/

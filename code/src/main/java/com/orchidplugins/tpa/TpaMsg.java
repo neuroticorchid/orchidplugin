@@ -60,7 +60,7 @@ public final class TpaMsg {
 
     public static void staffReport(Plugin plugin, String miniString) {
         for (Player player : plugin.getServer().getOnlinePlayers()) {
-            if (player.hasPermission("orchidtpa.staff")) {
+            if (player.hasPermission("orchid.tpa.staff")) {
                 Msg.send(player, miniString);
             }
         }

@@ -32,14 +32,12 @@ import java.util.UUID;
  */
 public final class ChestSettingsGui implements Listener {
 
-    private static final int HUB_SIZE = 27;
     private static final int PICKER_SIZE = 54;
     private static final int EDIT_SIZE = 27;
     private static final int PLAYERS_PER_PAGE = 36; // slots 9..44
 
-    private static final String HUB_TITLE = "TPA Settings";
-    private static final String PICKER_TITLE = "Select a Player #%d";
-    private static final String EDIT_PREFIX = "Edit: ";
+    private static final String PICKER_TITLE = "Orchid TPA \u203A Select Player #%d";
+    private static final String EDIT_PREFIX = "Orchid TPA \u203A Edit: ";
     private static final String FILLER = " ";
 
     private final MiniMessage mm = MiniMessage.miniMessage();
@@ -80,30 +78,12 @@ public final class ChestSettingsGui implements Listener {
     }
 
     public void open(Player player) {
-        openHub(player);
+        openPicker(player);
     }
 
     /** Opens straight to the per-player edit screen for the given target. */
     public void openWithPlayer(Player player, UUID other) {
         openEdit(player, other);
-    }
-
-    private void openHub(Player player) {
-        Inventory inv = Bukkit.createInventory(null, HUB_SIZE, HUB_TITLE);
-        for (int i = 0; i < HUB_SIZE; i++) {
-            if (i % 9 == 0 || i % 9 == 8 || i / 9 == 0 || i / 9 == 2) {
-                inv.setItem(i, filler());
-            }
-        }
-        inv.setItem(10, toggleItem("TPA (Global)", tpaManager.isGlobalOn(Request.Type.TPA)));
-        inv.setItem(12, toggleItem("TPAHERE (Global)", tpaManager.isGlobalOn(Request.Type.TPAHERE)));
-        TpaManager.PlayerSettings self = tpaManager.get(player.getUniqueId());
-        inv.setItem(14, toggleItem("Auto-accept TPA", self.isAutoTpa()));
-        inv.setItem(16, toggleItem("Auto-accept TPAHERE", self.isAutoTpaHere()));
-        inv.setItem(21, named(Material.PAPER, "<b><color:#A855F7>\u270E Edit a player\u2026</color></b>",
-                "<gray>Edit TPA/TPAHERE settings for a player."));
-        inv.setItem(22, named(Material.BARRIER, "<red>Close", "<gray>Close this menu."));
-        player.openInventory(inv);
     }
 
     private void openPicker(Player player) {
@@ -149,7 +129,7 @@ public final class ChestSettingsGui implements Listener {
                 "<color:#A855F7>\u270E Offline player</color>",
                 "<gray>Use <yellow>/tpsettings <name> <gray>to edit an offline player."));
         inv.setItem(52, named(Material.ARROW, "<gray><b>\u2192 Next</b></gray>", "<gray>Next page."));
-        inv.setItem(53, named(Material.BARRIER, "<red>Back", "<gray>Back to TPA settings."));
+        inv.setItem(53, named(Material.BARRIER, "<red>Close", "<gray>Close this menu."));
         player.openInventory(inv);
     }
 
@@ -169,8 +149,8 @@ public final class ChestSettingsGui implements Listener {
                 inv.setItem(i, filler());
             }
         }
-        inv.setItem(10, perPlayerToggle("TPA with " + name, tpa, otherSettings.getTpa() != null));
-        inv.setItem(12, perPlayerToggle("TPAHERE with " + name, tpahere, otherSettings.getTpaHere() != null));
+        inv.setItem(10, perPlayerToggle("TPA", tpa, otherSettings.getTpa() != null));
+        inv.setItem(12, perPlayerToggle("TPAHERE", tpahere, otherSettings.getTpaHere() != null));
         inv.setItem(14, isFriend
                 ? named(Material.HEART_OF_THE_SEA, "<gold><b>\u2665 Remove friend</b></gold>",
                         "<gray>Remove " + name + " from your friends.")
@@ -194,42 +174,10 @@ public final class ChestSettingsGui implements Listener {
         }
         event.setCancelled(true);
         String title = event.getView().getTitle();
-        if (HUB_TITLE.equals(title)) {
-            handleHubClick(player, raw);
-        } else if (isPickerTitle(title)) {
+        if (isPickerTitle(title)) {
             handlePickerClick(player, raw);
         } else if (title.startsWith(EDIT_PREFIX)) {
             handleEditClick(player, raw);
-        }
-    }
-
-    private void handleHubClick(Player player, int raw) {
-        switch (raw) {
-            case 10 -> {
-                tpaManager.setGlobal(Request.Type.TPA, !tpaManager.isGlobalOn(Request.Type.TPA));
-                openHub(player);
-            }
-            case 12 -> {
-                tpaManager.setGlobal(Request.Type.TPAHERE, !tpaManager.isGlobalOn(Request.Type.TPAHERE));
-                openHub(player);
-            }
-            case 14 -> {
-                TpaManager.PlayerSettings self = tpaManager.get(player.getUniqueId());
-                self.setAutoTpa(!self.isAutoTpa());
-                openHub(player);
-            }
-            case 16 -> {
-                TpaManager.PlayerSettings self = tpaManager.get(player.getUniqueId());
-                self.setAutoTpaHere(!self.isAutoTpaHere());
-                openHub(player);
-            }
-            case 21 -> {
-                pages.put(player.getUniqueId(), 0);
-                openPicker(player);
-            }
-            case 22 -> player.closeInventory();
-            default -> {
-            }
         }
     }
 
@@ -249,7 +197,7 @@ public final class ChestSettingsGui implements Listener {
             return;
         }
         if (raw == 53) {
-            openHub(player);
+            player.closeInventory();
             return;
         }
         if (raw >= 9 && raw < 45) {
@@ -265,7 +213,7 @@ public final class ChestSettingsGui implements Listener {
     private void handleEditClick(Player player, int raw) {
         UUID other = editTarget.get(player.getUniqueId());
         if (other == null) {
-            openHub(player);
+            openPicker(player);
             return;
         }
         String name = TpaUtil.nameOf(other);
@@ -275,7 +223,7 @@ public final class ChestSettingsGui implements Listener {
                 boolean next = !(settings.getTpa() != null
                         ? settings.getTpa() : tpaManager.isGlobalOn(Request.Type.TPA));
                 settings.setTpa(next);
-                TpaMsg.send(config, player, "<green>TPA with <yellow>" + name
+                TpaMsg.send(config, player, "<green>TPA for <yellow>" + name
                         + " <green>set to <bold>" + (next ? "<green>ON" : "<red>OFF") + "</bold><green>.");
                 openEdit(player, other);
             }
@@ -283,7 +231,7 @@ public final class ChestSettingsGui implements Listener {
                 boolean next = !(settings.getTpaHere() != null
                         ? settings.getTpaHere() : tpaManager.isGlobalOn(Request.Type.TPAHERE));
                 settings.setTpaHere(next);
-                TpaMsg.send(config, player, "<green>TPAHERE with <yellow>" + name
+                TpaMsg.send(config, player, "<green>TPAHERE for <yellow>" + name
                         + " <green>set to <bold>" + (next ? "<green>ON" : "<red>OFF") + "</bold><green>.");
                 openEdit(player, other);
             }
@@ -365,7 +313,7 @@ public final class ChestSettingsGui implements Listener {
 
     private boolean isPickerTitle(String title) {
         int hash = title.lastIndexOf('#');
-        if (hash < 0 || !title.startsWith("Select a Player ")) {
+        if (hash < 0 || !title.startsWith("Orchid TPA \u203A Select Player ")) {
             return false;
         }
         try {
